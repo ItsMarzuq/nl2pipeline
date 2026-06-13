@@ -1,0 +1,4 @@
+# GDLET data requirements
+tqdm
+pandas
+requests
