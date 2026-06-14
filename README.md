@@ -1,55 +1,68 @@
-# NL2Pipeline
+# NL2Pipeline Dataset Generation
 
-Natural Language-to-Code Framework for Big Data Orchestration
+This folder contains the GDELT dataset generation workflow for creating natural-language prompt and PySpark code pairs.
 
----
+## Files
 
-## Common Commands
+* `download_gdelt_real_data.py` — Downloads and cleans real GDELT event data.
+* `gdelt_environment.yaml` — Defines the GDELT dataset path, columns, and allowed outputs.
+* `generate_gdelt_pairs.py` — Generates prompt-code pairs using GPT-4o.
+* `validate_gdelt_pairs.py` — Validates generated pairs for JSON format, Python syntax, GDELT column usage, and Ruff linting.
+* `gdelt_pairs.jsonl` — Stores all generated prompt-code pairs.
+* `validation_output/gdelt_valid_pairs.jsonl` — Stores pairs that passed validation.
+* `validation_output/gdelt_failed_pairs.jsonl` — Stores pairs that failed validation.
+* `validation_output/validation_report.csv` — Contains the validation summary for each pair.
+
+## Setup
+
+Create and activate a virtual environment:
 
 ```bash
-# Start everything
-docker compose up -d
-
-# Stop everything (keep volumes)
-docker compose down
-
-# Stop and wipe all data (full reset)
-docker compose down --volumes
-
-# View logs for a specific service
-docker logs nl2pipeline-kafka
-docker logs nl2pipeline-cassandra
-docker logs nl2pipeline-kafka-init
-docker logs nl2pipeline-cassandra-init
-
-# Rebuild a specific service after code changes
-docker compose build --no-cache kafka-init
-docker compose build --no-cache cassandra-init
-
-# Run e2e test
-docker compose --profile test run --rm e2e-test
-
-# Check all service statuses
-docker compose ps
+python -m venv .venv
 ```
 
----
+Windows PowerShell:
 
-## Kafka Topics
+```powershell
+.venv\Scripts\Activate.ps1
+```
 
-| Topic | Partitions | Retention | Purpose |
-|---|---|---|---|
-| `gdelt-events-raw` | 6 | 7 days | GDELT global events stream |
-| `pipeline-errors-dlq` | 1 | 30 days | Dead letter queue for failed messages |
+Install dependencies:
 
----
+```bash
+pip install pandas tqdm ruff python-dotenv openai pyyaml requests
+```
 
-## Cassandra Schema
+Create a `.env` file and add your OpenAI API key:
 
-Keyspace: `nl2pipeline`
+```env
+OPENAI_API_KEY=your_api_key_here
+```
 
-| Table | Partition Key | Clustering Key | Purpose |
-|---|---|---|---|
-| `processed_events` | `(source_topic, event_date)` | `event_id` | Raw event sink for all source topics |
-| `aggregated_results` | `(source_topic, window_start)` | `group_key, metric_name` | Spark aggregation output |
-| `pipeline_runs` | `run_id` | — | SLM generation log — EX scoring and evaluation |
+## Run Steps
+
+Download real GDELT data:
+
+```bash
+python dataset_generation/download_gdelt_real_data.py
+```
+
+Generate prompt-code pairs:
+
+```bash
+python dataset_generation/generate_gdelt_pairs.py
+```
+
+Validate generated pairs:
+
+```bash
+python dataset_generation/validate_gdelt_pairs.py
+```
+
+The valid dataset will be saved at:
+
+```text
+dataset_generation/validation_output/gdelt_valid_pairs.jsonl
+```
+
+
