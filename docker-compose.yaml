@@ -1,0 +1,163 @@
+services:
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: nl2pipeline-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: ${ZOOKEEPER_CLIENT_PORT}
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "${ZOOKEEPER_CLIENT_PORT}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nl2pipeline-net
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: nl2pipeline-kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"
+      - "${KAFKA_EXTERNAL_PORT}:${KAFKA_EXTERNAL_PORT}"
+    environment:
+      KAFKA_BROKER_ID: ${KAFKA_BROKER_ID}
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:${ZOOKEEPER_CLIENT_PORT}
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:${KAFKA_EXTERNAL_PORT}
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://nl2pipeline-kafka:9092,PLAINTEXT_HOST://localhost:${KAFKA_EXTERNAL_PORT}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: ${KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR}
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "${KAFKA_HOST}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - nl2pipeline-net
+
+  cassandra:
+    image: cassandra:4.1
+    container_name: nl2pipeline-cassandra
+    ports:
+      - "${CASSANDRA_PORT}:9042"
+    environment:
+      - CASSANDRA_CLUSTER_NAME=${CASSANDRA_CLUSTER_NAME}
+    volumes:
+      - cassandra-data:/var/lib/cassandra
+    healthcheck:
+      test: ["CMD", "cqlsh", "-e", "describe keyspaces"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    networks:
+      - nl2pipeline-net
+
+  spark:
+    image: apache/spark:3.5.1
+    container_name: nl2pipeline-spark
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+    environment:
+      - SPARK_NO_DAEMONIZE=true
+      - SPARK_MASTER_WEBUI_PORT=${SPARK_MASTER_WEBUI_PORT}
+    ports:
+      - "${SPARK_MASTER_WEBUI_PORT}:${SPARK_MASTER_WEBUI_PORT}"
+      - "${SPARK_MASTER_PORT}:${SPARK_MASTER_PORT}"
+    networks:
+      - nl2pipeline-net
+
+  spark-worker:
+    image: apache/spark:3.5.1
+    container_name: nl2pipeline-spark-worker
+    depends_on:
+      - spark
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark:${SPARK_MASTER_PORT}
+    environment:
+      - SPARK_NO_DAEMONIZE=true
+      - SPARK_WORKER_WEBUI_PORT=${SPARK_WORKER_WEBUI_PORT}
+      - SPARK_WORKER_MEMORY=${SPARK_WORKER_MEMORY}
+      - SPARK_WORKER_CORES=${SPARK_WORKER_CORES}
+    ports:
+      - "${SPARK_WORKER_WEBUI_PORT}:${SPARK_WORKER_WEBUI_PORT}"
+    networks:
+      - nl2pipeline-net
+
+  kafka-init:
+    build: ./startup_scripts
+    container_name: nl2pipeline-kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      - KAFKA_HOST=nl2pipeline-kafka:9092
+    command: python startup_scripts/init_kafka_topics.py
+    working_dir: /app
+    volumes:
+      - .:/app
+    networks:
+      - nl2pipeline-net
+    restart: on-failure
+
+  cassandra-init:
+    build: ./startup_scripts
+    container_name: nl2pipeline-cassandra-init
+    depends_on:
+      cassandra:
+        condition: service_healthy
+    environment:
+      - CASSANDRA_HOST=cassandra
+      - CASSANDRA_PORT=${CASSANDRA_PORT}
+    command: python startup_scripts/init_cassandra.py
+    working_dir: /app
+    volumes:
+      - .:/app
+    networks:
+      - nl2pipeline-net
+    restart: "no"
+  
+  e2e-test:
+    build:
+      context: .
+      dockerfile: dev/e2e_test/Dockerfile
+    container_name: nl2pipeline-e2e-test
+    depends_on:
+      kafka:
+        condition: service_healthy
+      cassandra:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+      cassandra-init:
+        condition: service_completed_successfully
+    environment:
+      - KAFKA_BROKER=kafka:9092
+      - KAFKA_TOPIC=gdelt-events-raw
+      - CASSANDRA_HOST=cassandra
+      - CASSANDRA_PORT=${CASSANDRA_PORT}
+      - CASSANDRA_KEYSPACE=nl2pipeline
+      - NUM_EVENTS=100
+      - SPARK_MASTER=local[*]
+    command: >
+      spark-submit
+        --master local[*]
+        --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,com.datastax.spark:spark-cassandra-connector_2.12:3.4.1
+        /app/e2e_test.py
+    volumes:
+      - .:/app/project
+    networks:
+      - nl2pipeline-net
+    profiles:
+      - test
+
+volumes:
+  cassandra-data:
+  zookeeper-data:
+
+networks:
+  nl2pipeline-net:
+    driver: bridge
