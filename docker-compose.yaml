@@ -120,6 +120,39 @@ services:
       - nl2pipeline-net
     restart: "no"
   
+  e2e-test:
+    build:
+      context: .
+      dockerfile: dev/e2e_test/Dockerfile
+    container_name: nl2pipeline-e2e-test
+    depends_on:
+      kafka:
+        condition: service_healthy
+      cassandra:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+      cassandra-init:
+        condition: service_completed_successfully
+    environment:
+      - KAFKA_BROKER=kafka:9092
+      - KAFKA_TOPIC=gdelt-events-raw
+      - CASSANDRA_HOST=cassandra
+      - CASSANDRA_PORT=${CASSANDRA_PORT}
+      - CASSANDRA_KEYSPACE=nl2pipeline
+      - NUM_EVENTS=100
+      - SPARK_MASTER=local[*]
+    command: >
+      spark-submit
+        --master local[*]
+        --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,com.datastax.spark:spark-cassandra-connector_2.12:3.4.1
+        /app/e2e_test.py
+    volumes:
+      - .:/app/project
+    networks:
+      - nl2pipeline-net
+    profiles:
+      - test
 
 volumes:
   cassandra-data:
