@@ -119,7 +119,15 @@ services:
     networks:
       - nl2pipeline-net
     restart: "no"
-  
+
+  web-server:
+    build: ./web-server
+    container_name: nl2pipeline-web-server
+    ports:
+      - "${WEB_SERVER_PORT}:8000"
+    networks:
+      - nl2pipeline-net
+
   e2e-test:
     build:
       context: .
