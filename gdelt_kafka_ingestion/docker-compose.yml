@@ -1,0 +1,76 @@
+services:
+  kafka:
+    image: apache/kafka:3.7.0
+    container_name: gdelt-kafka
+    ports:
+      - "9094:9094"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    healthcheck:
+      test: [ "CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  create-topic:
+    build: .
+    container_name: gdelt-create-topic
+    env_file:
+      - .env
+    command: [ "python", "-m", "app.create_topic" ]
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  producer:
+    build: .
+    container_name: gdelt-producer
+    env_file:
+      - .env
+    command: [ "python", "-m", "app.producer" ]
+    volumes:
+      - gdelt-data:/data/gdelt:ro
+    depends_on:
+      kafka:
+        condition: service_healthy
+      create-topic:
+        condition: service_completed_successfully
+    restart: on-failure
+
+  gdelt-downloader:
+    build: .
+    container_name: gdelt-downloader
+    profiles:
+      - init
+    env_file:
+      - .env
+    command: [ "python", "-m", "app.downloader" ]
+    volumes:
+      - gdelt-data:/data/gdelt
+
+  consumer-test:
+    build: .
+    container_name: gdelt-consumer-test
+    profiles:
+      - tools
+    env_file:
+      - .env
+    command: [ "python", "-m", "app.consumer_test" ]
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+volumes:
+  gdelt-data:
