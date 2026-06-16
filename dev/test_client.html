@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NL2Pipeline — test client</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #f5f5f5; color: #111; padding: 2rem; max-width: 860px; margin: auto; }
+    @media (prefers-color-scheme: dark) { body { background: #1a1a1a; color: #eee; } }
+
+    h1 { font-size: 18px; font-weight: 500; margin-bottom: 1.5rem; color: #555; }
+    @media (prefers-color-scheme: dark) { h1 { color: #aaa; } }
+
+    .card { background: #fff; border: 0.5px solid #ddd; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+    @media (prefers-color-scheme: dark) { .card { background: #222; border-color: #333; } }
+
+    label { font-size: 13px; color: #666; display: block; margin-bottom: 6px; }
+    @media (prefers-color-scheme: dark) { label { color: #aaa; } }
+
+    textarea {
+      width: 100%; min-height: 90px; resize: vertical;
+      font-family: inherit; font-size: 14px; padding: 10px 12px;
+      border-radius: 8px; border: 0.5px solid #ccc;
+      background: #fafafa; color: inherit; line-height: 1.5;
+    }
+    @media (prefers-color-scheme: dark) { textarea { background: #2a2a2a; border-color: #444; } }
+    textarea:focus { outline: none; border-color: #888; }
+
+    .row { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
+
+    input.url {
+      flex: 1; font-size: 13px; padding: 8px 10px;
+      border-radius: 8px; border: 0.5px solid #ccc;
+      background: #fafafa; color: #555; font-family: monospace;
+    }
+    @media (prefers-color-scheme: dark) { input.url { background: #2a2a2a; border-color: #444; color: #aaa; } }
+    input.url:focus { outline: none; border-color: #888; color: inherit; }
+
+    button {
+      padding: 8px 18px; font-size: 14px; border-radius: 8px;
+      border: 0.5px solid #ccc; background: transparent; color: inherit;
+      cursor: pointer; white-space: nowrap;
+    }
+    button:hover { background: rgba(0,0,0,0.05); }
+    @media (prefers-color-scheme: dark) { button:hover { background: rgba(255,255,255,0.07); } }
+    button:active { transform: scale(0.98); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    .status-bar { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #888; min-height: 20px; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: #ccc; }
+    .dot.connecting { background: #EF9F27; animation: pulse 1s infinite; }
+    .dot.streaming  { background: #1D9E75; animation: pulse 0.6s infinite; }
+    .dot.done       { background: #639922; }
+    .dot.error      { background: #E24B4A; }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+
+    #events-list { margin-top: 12px; }
+    .empty { text-align: center; padding: 2rem; color: #aaa; font-size: 13px; }
+
+    .event-row { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 0.5px solid #eee; font-size: 13px; }
+    @media (prefers-color-scheme: dark) { .event-row { border-color: #333; } }
+    .event-row:last-child { border-bottom: none; }
+
+    .badge { font-size: 11px; padding: 2px 8px; border-radius: 6px; font-weight: 500; white-space: nowrap; min-width: 130px; text-align: center; }
+    .badge-meta  { background: #EEEDFE; color: #3C3489; }
+    .badge-infer { background: #E1F5EE; color: #085041; }
+    .badge-done  { background: #EAF3DE; color: #27500A; }
+    .badge-error { background: #FCEBEB; color: #791F1F; }
+    .badge-info  { background: #f0f0f0; color: #555; }
+    @media (prefers-color-scheme: dark) {
+      .badge-meta  { background: #26215C; color: #CECBF6; }
+      .badge-infer { background: #04342C; color: #9FE1CB; }
+      .badge-done  { background: #173404; color: #C0DD97; }
+      .badge-error { background: #501313; color: #F7C1C1; }
+      .badge-info  { background: #333; color: #aaa; }
+    }
+
+    .event-data { color: #555; word-break: break-all; flex: 1; line-height: 1.5; }
+    @media (prefers-color-scheme: dark) { .event-data { color: #bbb; } }
+
+    pre.code-out {
+      font-family: monospace; font-size: 12px;
+      background: #f8f8f8; border: 0.5px solid #e0e0e0;
+      border-radius: 8px; padding: 12px; overflow-x: auto;
+      white-space: pre; margin-top: 4px; line-height: 1.6; color: #111;
+    }
+    @media (prefers-color-scheme: dark) { pre.code-out { background: #2a2a2a; border-color: #444; color: #eee; } }
+  </style>
+</head>
+<body>
+
+<h1>NL2Pipeline — test client</h1>
+
+<div class="card">
+  <label for="prompt-input">Natural language prompt</label>
+  <textarea id="prompt-input" placeholder="e.g. Count GDELT events by country every day and write the results to Cassandra."></textarea>
+  <div class="row">
+    <input class="url" id="backend-url" value="http://localhost:8000" spellcheck="false" aria-label="Backend URL"/>
+    <button id="send-btn">&#9654; Send</button>
+    <button id="clear-btn" style="color:#888">&#128465; Clear</button>
+  </div>
+  <p style="font-size:12px;color:#aaa;margin-top:8px">Ctrl+Enter to send</p>
+</div>
+
+<div class="card">
+  <div class="status-bar">
+    <div class="dot" id="dot"></div>
+    <span id="status-text">Idle — backend at <span id="url-preview">http://localhost:8000</span></span>
+  </div>
+  <div id="events-list">
+    <div class="empty">Events will appear here as they stream in.</div>
+  </div>
+</div>
+
+<script>
+const promptEl  = document.getElementById('prompt-input');
+const urlEl     = document.getElementById('backend-url');
+const sendBtn   = document.getElementById('send-btn');
+const clearBtn  = document.getElementById('clear-btn');
+const list      = document.getElementById('events-list');
+const dot       = document.getElementById('dot');
+const statusTx  = document.getElementById('status-text');
+const urlPrev   = document.getElementById('url-preview');
+
+urlEl.addEventListener('input', () => { urlPrev.textContent = urlEl.value; });
+
+function setStatus(state, text) {
+  dot.className = 'dot ' + state;
+  statusTx.textContent = text;
+}
+
+function addEvent(type, content) {
+  const empty = list.querySelector('.empty');
+  if (empty) empty.remove();
+
+  const row = document.createElement('div');
+  row.className = 'event-row';
+
+  const badgeClass = {
+    metadata_loaded:    'badge-meta',
+    inference_complete: 'badge-infer',
+    done:               'badge-done',
+    error:              'badge-error',
+  }[type] || 'badge-info';
+
+  const badge = document.createElement('span');
+  badge.className = 'badge ' + badgeClass;
+  badge.textContent = type;
+  row.appendChild(badge);
+
+  const dataWrap = document.createElement('div');
+  dataWrap.className = 'event-data';
+
+  const parsed = typeof content === 'object' ? content : (() => { try { return JSON.parse(content); } catch { return null; } })();
+
+  if (parsed && (type === 'inference_complete' || type === 'done') && parsed.code) {
+    const meta = document.createElement('div');
+    meta.style.marginBottom = '4px';
+    const keys = Object.keys(parsed).filter(k => k !== 'code' && k !== 'attempt_log');
+    meta.textContent = keys.map(k => k + ': ' + JSON.stringify(parsed[k])).join('  ·  ');
+    dataWrap.appendChild(meta);
+    const pre = document.createElement('pre');
+    pre.className = 'code-out';
+    pre.textContent = parsed.code;
+    dataWrap.appendChild(pre);
+  } else {
+    dataWrap.textContent = parsed ? JSON.stringify(parsed) : String(content);
+  }
+
+  row.appendChild(dataWrap);
+  list.appendChild(row);
+  row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+sendBtn.addEventListener('click', async () => {
+  const prompt = promptEl.value.trim();
+  if (!prompt) { promptEl.focus(); return; }
+
+  const base = urlEl.value.replace(/\/$/, '');
+  sendBtn.disabled = true;
+  setStatus('connecting', 'Connecting to ' + base + ' …');
+
+  try {
+    const res = await fetch(base + '/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt }),
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      addEvent('error', res.status + ' — ' + err);
+      setStatus('error', 'Request failed (' + res.status + ')');
+      sendBtn.disabled = false;
+      return;
+    }
+
+    setStatus('streaming', 'Streaming …');
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+
+      const parts = buf.split('\n\n');
+      buf = parts.pop();
+
+      for (const part of parts) {
+        const lines = part.trim().split('\n');
+        let eventType = 'message';
+        let dataLine  = '';
+        for (const line of lines) {
+          if (line.startsWith('event:')) eventType = line.slice(6).trim();
+          if (line.startsWith('data:'))  dataLine  = line.slice(5).trim();
+        }
+        if (dataLine) {
+          try { addEvent(eventType, JSON.parse(dataLine)); }
+          catch { addEvent(eventType, dataLine); }
+        }
+      }
+    }
+
+    setStatus('done', 'Done');
+  } catch (e) {
+    addEvent('error', e.message);
+    setStatus('error', 'Error — is the backend running?');
+  }
+
+  sendBtn.disabled = false;
+});
+
+clearBtn.addEventListener('click', () => {
+  list.innerHTML = '<div class="empty">Events will appear here as they stream in.</div>';
+  dot.className = 'dot';
+  statusTx.textContent = 'Idle — backend at ' + urlEl.value;
+});
+
+promptEl.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') sendBtn.click();
+});
+</script>
+</body>
+</html>
