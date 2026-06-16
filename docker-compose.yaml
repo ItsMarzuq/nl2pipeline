@@ -120,6 +120,47 @@ services:
       - nl2pipeline-net
     restart: "no"
   
+  gdelt-producer:
+    build: ./gdelt_kafka_ingestion
+    container_name: gdelt-producer
+    env_file:
+      - ./gdelt_kafka_ingestion/.env
+    command: [ "python", "-m", "app.producer" ]
+    volumes:
+      - gdelt-data:/data/gdelt:ro
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: on-failure
+    networks:
+      - nl2pipeline-net
+
+  gdelt-downloader:
+    build: ./gdelt_kafka_ingestion
+    container_name: gdelt-downloader
+    profiles:
+      - init
+    env_file:
+      - ./gdelt_kafka_ingestion/.env
+    command: [ "python", "-m", "app.downloader" ]
+    volumes:
+      - gdelt-data:/data/gdelt
+    networks:
+      - nl2pipeline-net
+
+  gdelt-consumer-test:
+    build: ./gdelt_kafka_ingestion
+    container_name: gdelt-consumer-test
+    profiles:
+      - tools
+    env_file:
+      - ./gdelt_kafka_ingestion/.env
+    command: [ "python", "-m", "app.consumer_test" ]
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - nl2pipeline-net
   e2e-test:
     build:
       context: .
