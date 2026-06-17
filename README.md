@@ -116,10 +116,8 @@ nl2pipeline/
 
 ```bash
 pip install huggingface_hub
-huggingface-cli login          # paste your HF token
-huggingface-cli download microsoft/Phi-4-mini-instruct \
-    --local-dir models/phi4-mini \
-    --local-dir-use-symlinks False
+hf auth login          # paste your HF token
+hf download microsoft/Phi-4-mini-instruct --local-dir ./models/phi4-mini
 ```
 
 This downloads ~8 GB into `models/phi4-mini/`.
