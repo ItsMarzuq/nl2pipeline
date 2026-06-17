@@ -86,8 +86,21 @@ def _stage1_lint(code: str) -> str | None:
 # Stage 2 — spark-submit via Docker exec
 # ---------------------------------------------------------------------------
 
-_SPARK_STARTUP_TIMEOUT = 30   # seconds to wait for JVM + Kafka connect
-_SPARK_STABILITY_TIMEOUT = 30  # extra seconds to catch post-connect crashes
+def _extract_spark_errors(stdout: str, stderr: str) -> str:
+    """Return error-relevant lines from spark-submit output."""
+    # Python tracebacks go to stderr — show it first
+    error_lines = [
+        line for line in (stdout + "\n" + stderr).splitlines()
+        if any(kw in line for kw in ("ERROR", "Exception", "Traceback", "Error:", "raise ", "WARN"))
+    ]
+    if error_lines:
+        return "\n".join(error_lines[:50])
+    # fallback: stderr in full (Python exception lives here)
+    return stderr[:3000] or stdout[:3000]
+
+
+_SPARK_STARTUP_TIMEOUT = 15   # seconds to wait for JVM + Kafka connect
+_SPARK_STABILITY_TIMEOUT = 15  # extra seconds to catch post-connect crashes
 _SPARK_JAR_CACHE = "/opt/spark-jars"
 
 
@@ -135,8 +148,10 @@ def _stage2_spark_submit(code: str) -> str | None:
         # Phase 1 — startup errors
         if done_event.wait(timeout=_SPARK_STARTUP_TIMEOUT):
             proc = result_holder["proc"]
+            log.info("spark-submit exited with returncode=%d", proc.returncode)
+            log.debug("spark stderr: %s", proc.stderr[-1000:])
             if proc.returncode != 0:
-                return f"spark-submit failed at startup:\n{(proc.stdout + proc.stderr)[-2000:]}"
+                return f"spark-submit failed at startup:\n{_extract_spark_errors(proc.stdout, proc.stderr)}"
             return None
 
         log.info("spark-submit survived startup (%ds) — checking post-Kafka-connect stability", _SPARK_STARTUP_TIMEOUT)
@@ -145,7 +160,7 @@ def _stage2_spark_submit(code: str) -> str | None:
         if done_event.wait(timeout=_SPARK_STABILITY_TIMEOUT):
             proc = result_holder["proc"]
             if proc.returncode != 0:
-                return f"spark-submit crashed after Kafka connect:\n{(proc.stdout + proc.stderr)[-2000:]}"
+                return f"spark-submit crashed after Kafka connect:\n{_extract_spark_errors(proc.stdout, proc.stderr)}"
             return None
 
         log.info("spark-submit stable after %ds — treating as pass", _SPARK_STARTUP_TIMEOUT + _SPARK_STABILITY_TIMEOUT)
