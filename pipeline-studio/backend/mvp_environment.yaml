@@ -1,0 +1,367 @@
+environment:
+  name: gdelt_big_data_environment
+  version: "0.1.0"
+  description: >
+    Metadata catalogue for the GDELT streaming environment used by NL2Pipeline.
+    This file tells the user and the code-generation model which Kafka topics,
+    Spark settings, GDELT fields, and Cassandra tables are available.
+  domain: global_news_events
+  timezone: UTC
+
+dataset:
+  name: GDELT Events
+  description: >
+    GDELT event records describing global news events, actors, locations,
+    event types, tone, mentions, sources, and article counts.
+  record_format: json
+  primary_event_time_field: ts
+  primary_event_id_field: event_id
+
+services:
+  kafka:
+    bootstrap_servers: kafka:9092
+    default_starting_offsets: earliest
+    topics:
+      - name: gdelt.events.raw
+        display_name: Raw GDELT Events
+        type: source
+        description: Raw GDELT event messages produced by the GDELT Kafka producer.
+        key_field: event_id
+        value_format: json
+        allowed_operations:
+          - read_stream
+          - filter
+          - select_columns
+
+      - name: gdelt.events.cleaned
+        display_name: Cleaned GDELT Events
+        type: intermediate
+        description: Cleaned and validated GDELT events after schema checks and null handling.
+        key_field: event_id
+        value_format: json
+        allowed_operations:
+          - read_stream
+          - filter
+          - aggregate
+          - write_to_cassandra
+
+      - name: gdelt.events.dead_letter
+        display_name: Invalid GDELT Events
+        type: error
+        description: Events rejected because of invalid JSON, missing required fields, or bad data types.
+        key_field: event_id
+        value_format: json
+        allowed_operations:
+          - read_stream
+          - debug_only
+
+  spark:
+    app_name: gdelt_nl2pipeline_job
+    master: spark://spark-master:7077
+    deploy_mode: client
+    language: python
+    supported_api: pyspark
+    packages:
+      - org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1
+      - com.datastax.spark:spark-cassandra-connector_2.12:3.5.1
+    default_streaming_trigger: processingTime=30 seconds
+    checkpoint_base_path: /tmp/spark-checkpoints/gdelt
+
+  cassandra:
+    contact_points:
+      - cassandra
+    port: 9042
+    keyspace: gdelt_analytics
+    replication:
+      class: SimpleStrategy
+      replication_factor: 1
+
+gdelt_schema:
+  fields:
+    - name: event_id
+      type: string
+      nullable: false
+      description: Unique GDELT event identifier.
+
+    - name: event_date
+      type: date
+      nullable: false
+      description: Date of the event.
+
+    - name: actor1
+      type: string
+      nullable: true
+      description: First actor involved in the event.
+
+    - name: actor2
+      type: string
+      nullable: true
+      description: Second actor involved in the event.
+
+    - name: event_code
+      type: string
+      nullable: true
+      description: GDELT CAMEO event code representing the type of event.
+
+    - name: country
+      type: string
+      nullable: true
+      description: Country code associated with the event location.
+
+    - name: lat
+      type: double
+      nullable: true
+      description: Latitude of the event location.
+
+    - name: lon
+      type: double
+      nullable: true
+      description: Longitude of the event location.
+
+    - name: tone
+      type: double
+      nullable: true
+      description: Average emotional tone of related news coverage.
+
+    - name: num_mentions
+      type: int
+      nullable: true
+      description: Number of mentions of the event.
+
+    - name: num_sources
+      type: int
+      nullable: true
+      description: Number of unique sources reporting the event.
+
+    - name: num_articles
+      type: int
+      nullable: true
+      description: Number of articles related to the event.
+
+    - name: is_root_event
+      type: boolean
+      nullable: true
+      description: Whether the event is marked as a root event.
+
+    - name: ts
+      type: timestamp
+      nullable: false
+      description: Ingestion timestamp used for streaming and time-windowed analysis.
+
+cassandra_tables:
+  - name: events_by_country_date
+    display_name: Events by Country and Date
+    description: Stores individual GDELT events partitioned by country and event date.
+    table_type: detail
+    primary_key:
+      partition_key:
+        - country
+        - event_date
+      clustering_key:
+        - ts
+        - event_id
+    clustering_order:
+      ts: DESC
+      event_id: ASC
+    columns:
+      event_id: text
+      event_date: date
+      country: text
+      ts: timestamp
+      actor1: text
+      actor2: text
+      event_code: text
+      lat: double
+      lon: double
+      tone: double
+      num_mentions: int
+      num_sources: int
+      num_articles: int
+      is_root_event: boolean
+    allowed_writes:
+      - append
+    example_user_requests:
+      - Show events in Ireland by date.
+      - Save filtered US conflict events to Cassandra.
+      - Find recent root events for a country.
+
+  - name: event_counts_by_country_day
+    display_name: Daily Event Counts by Country
+    description: Aggregated count of events per country per day.
+    table_type: aggregate
+    primary_key:
+      partition_key:
+        - country
+      clustering_key:
+        - event_date
+    clustering_order:
+      event_date: DESC
+    columns:
+      country: text
+      event_date: date
+      event_count: bigint
+      root_event_count: bigint
+      total_mentions: bigint
+      total_articles: bigint
+      avg_tone: double
+      updated_at: timestamp
+    allowed_writes:
+      - upsert
+    example_user_requests:
+      - Count events per country per day.
+      - Aggregate daily GDELT activity by country.
+      - Calculate average tone for each country daily.
+
+  - name: event_counts_by_code_day
+    display_name: Daily Event Counts by Event Code
+    description: Aggregated count of events per GDELT event code per day.
+    table_type: aggregate
+    primary_key:
+      partition_key:
+        - event_code
+      clustering_key:
+        - event_date
+    clustering_order:
+      event_date: DESC
+    columns:
+      event_code: text
+      event_date: date
+      event_count: bigint
+      total_mentions: bigint
+      avg_tone: double
+      updated_at: timestamp
+    allowed_writes:
+      - upsert
+    example_user_requests:
+      - Count events by event code.
+      - Show the most common event types per day.
+      - Track event code activity over time.
+
+  - name: tone_by_country_hour
+    display_name: Hourly Tone by Country
+    description: Hourly average tone and volume metrics for each country.
+    table_type: time_windowed_aggregate
+    primary_key:
+      partition_key:
+        - country
+      clustering_key:
+        - hour_start
+    clustering_order:
+      hour_start: DESC
+    columns:
+      country: text
+      hour_start: timestamp
+      event_count: bigint
+      avg_tone: double
+      min_tone: double
+      max_tone: double
+      total_mentions: bigint
+      updated_at: timestamp
+    allowed_writes:
+      - upsert
+    example_user_requests:
+      - Compute hourly average tone by country.
+      - Track negative news tone over time.
+      - Save hourly sentiment trends to Cassandra.
+
+  - name: actor_pair_activity
+    display_name: Actor Pair Activity
+    description: Aggregated interaction counts between actor1 and actor2.
+    table_type: aggregate
+    primary_key:
+      partition_key:
+        - actor1
+      clustering_key:
+        - actor2
+        - event_date
+    clustering_order:
+      actor2: ASC
+      event_date: DESC
+    columns:
+      actor1: text
+      actor2: text
+      event_date: date
+      event_count: bigint
+      avg_tone: double
+      top_event_code: text
+      total_mentions: bigint
+      updated_at: timestamp
+    allowed_writes:
+      - upsert
+    example_user_requests:
+      - Aggregate interactions between actor pairs.
+      - Find actor pairs with the most mentions.
+      - Store daily actor relationship activity.
+
+user_visible_catalog:
+  available_kafka_topics:
+    - gdelt.events.raw
+    - gdelt.events.cleaned
+    - gdelt.events.dead_letter
+
+  available_cassandra_tables:
+    - events_by_country_date
+    - event_counts_by_country_day
+    - event_counts_by_code_day
+    - tone_by_country_hour
+    - actor_pair_activity
+
+  supported_pipeline_tasks:
+    - Read real-time GDELT events from Kafka.
+    - Filter events by country, event code, actor, date, tone, or root-event status.
+    - Select and clean GDELT columns.
+    - Aggregate events by country, event code, actor pair, day, or hour.
+    - Calculate counts, total mentions, total articles, and average tone.
+    - Write detail or aggregate results to the listed Cassandra tables.
+
+generation_rules:
+  allowed_sources:
+    kafka_topics:
+      - gdelt.events.raw
+      - gdelt.events.cleaned
+
+  allowed_sinks:
+    cassandra_tables:
+      - events_by_country_date
+      - event_counts_by_country_day
+      - event_counts_by_code_day
+      - tone_by_country_hour
+      - actor_pair_activity
+
+  required_validation:
+    - Generated code must only use Kafka topics listed in this metadata file.
+    - Generated code must only write to Cassandra tables listed in this metadata file.
+    - Generated code must use fields defined in gdelt_schema.
+    - Generated code must include Spark Kafka read configuration.
+    - Generated code must include Cassandra write configuration.
+    - Streaming jobs must include a checkpoint location.
+    - Aggregation jobs must use appropriate watermarking or time-window logic when using ts.
+
+  disallowed_actions:
+    - Dropping Cassandra keyspaces or tables.
+    - Creating new Kafka topics from generated pipeline code.
+    - Writing to unknown Cassandra tables.
+    - Using fields that are not present in the GDELT schema.
+    - Running destructive operations unless explicitly approved by the validation harness.
+
+example_prompts:
+  - prompt: Count GDELT events by country every day and save the result to Cassandra.
+    expected_source_topic: gdelt.events.cleaned
+    expected_sink_table: event_counts_by_country_day
+
+  - prompt: Calculate hourly average tone for each country from the GDELT stream.
+    expected_source_topic: gdelt.events.cleaned
+    expected_sink_table: tone_by_country_hour
+
+  - prompt: Store all root events from the US into Cassandra by country and date.
+    expected_source_topic: gdelt.events.cleaned
+    expected_sink_table: events_by_country_date
+
+  - prompt: Aggregate GDELT events by event code and event date.
+    expected_source_topic: gdelt.events.cleaned
+    expected_sink_table: event_counts_by_code_day
+
+  - prompt: Track daily activity between actor1 and actor2.
+    expected_source_topic: gdelt.events.cleaned
+    expected_sink_table: actor_pair_activity
+
