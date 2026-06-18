@@ -1,0 +1,57 @@
+project: NL2Pipeline
+dataset: GDELT
+
+input_data:
+  name: gdelt_events
+  type: csv
+  path: data/gdelt/gdelt_events_sample.csv
+  description: Real GDELT 2.0 Events data downloaded from recent event export files.
+  columns:
+    - global_event_id
+    - event_date
+    - actor1_country
+    - actor2_country
+    - event_code
+    - event_base_code
+    - event_root_code
+    - quad_class
+    - goldstein_scale
+    - num_mentions
+    - num_sources
+    - num_articles
+    - avg_tone
+    - action_country
+    - action_location
+    - action_lat
+    - action_long
+    - source_url
+
+processing:
+  engine: apache_spark
+  language: python
+  library: pyspark
+
+allowed_outputs:
+  local_parquet:
+    path: outputs/gdelt/
+  local_csv:
+    path: outputs/gdelt_csv/
+  cassandra:
+    keyspace: nl2pipeline
+    tables:
+      gdelt_country_counts:
+        columns:
+          country: text
+          event_count: int
+      gdelt_daily_counts:
+        columns:
+          event_date: text
+          event_count: int
+      gdelt_tone_summary:
+        columns:
+          country: text
+          avg_tone: float
+      gdelt_event_code_summary:
+        columns:
+          event_code: text
+          event_count: int

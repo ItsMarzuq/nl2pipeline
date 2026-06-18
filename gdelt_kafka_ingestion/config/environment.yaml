@@ -1,0 +1,46 @@
+message_schema:
+  topic: gdelt-events
+  fields:
+    - name: event_id
+      type: string
+    - name: event_date
+      type: string
+    - name: actor1
+      type: string
+    - name: actor2
+      type: string
+    - name: event_code
+      type: string
+    - name: country
+      type: string
+    - name: lat
+      type: float_or_null
+    - name: lon
+      type: float_or_null
+    - name: tone
+      type: float_or_null
+    - name: num_mentions
+      type: int_or_null
+    - name: num_sources
+      type: int_or_null
+    - name: num_articles
+      type: int_or_null
+    - name: is_root_event
+      type: boolean
+    - name: ts
+      type: iso8601_string
+
+gdelt_column_mapping:
+  event_id: 0
+  event_date: 1
+  actor1: 6
+  actor2: 16
+  is_root_event: 25
+  event_code: 26
+  num_mentions: 31
+  num_sources: 32
+  num_articles: 33
+  tone: 34
+  country: 53
+  lat: 56
+  lon: 57

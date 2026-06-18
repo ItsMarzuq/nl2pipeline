@@ -1,4 +1,38 @@
 node_modules/
-.DS_Store
 dist/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Secrets
 .env
+*.env
+
+# Ruff
+.ruff_cache/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Large data / generated outputs
+data/
+outputs/
+*.zip
+
+# Local model weights (bind-mounted into backend container)
+models/
+
+# Optional: temporary validation scripts
+dataset_generation/validation_output/temp_scripts/
