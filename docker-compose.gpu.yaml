@@ -1,0 +1,25 @@
+# GPU override for Windows/Linux machines with an NVIDIA GPU.
+#
+# Usage:
+#   docker-compose -f docker-compose.yaml -f docker-compose.gpu.yaml up
+#
+# This file:
+#   1. Swaps the backend base image to one with CUDA 12.6 support.
+#   2. Reserves the NVIDIA GPU device for the backend container.
+#
+# Requirements:
+#   - NVIDIA Container Toolkit installed (https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
+#   - nvidia-smi visible in the host
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.gpu
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]

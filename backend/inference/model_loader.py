@@ -3,16 +3,6 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-import torch
-from langchain_community.llms import HuggingFacePipeline
-from peft import PeftModel
-from transformers import (
-    AutoModelForCausalLM,
-    AutoTokenizer,
-    BitsAndBytesConfig,
-    pipeline,
-)
-
 log = logging.getLogger(__name__)
 
 
@@ -20,7 +10,7 @@ def load_llm(
     base_model_id: str,
     adapter_path: str | None,
     max_new_tokens: int = 1024,
-) -> tuple[Any, HuggingFacePipeline]:
+) -> tuple[Any, Any]:
     """
     Load tokenizer and model, optionally apply a LoRA adapter, and return
     (tokenizer, HuggingFacePipeline) for use in the pipeline engine.
@@ -34,6 +24,16 @@ def load_llm(
     max_new_tokens:
         Hard cap on tokens generated per call.
     """
+    import torch
+    from langchain_community.llms import HuggingFacePipeline
+    from peft import PeftModel
+    from transformers import (
+        AutoModelForCausalLM,
+        AutoTokenizer,
+        BitsAndBytesConfig,
+        pipeline,
+    )
+
     log.info("Loading tokenizer: %s", base_model_id)
     tokenizer = AutoTokenizer.from_pretrained(base_model_id, use_fast=True)
     tokenizer.pad_token = tokenizer.eos_token

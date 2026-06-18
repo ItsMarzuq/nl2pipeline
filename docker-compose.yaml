@@ -74,7 +74,7 @@ services:
       - nl2pipeline-net
 
   spark-worker:
-    image: apache/spark:latest 
+    image: apache/spark:3.5.1
     container_name: nl2pipeline-spark-worker
     depends_on:
       - spark
@@ -186,6 +186,7 @@ services:
       - CASSANDRA_HOST=cassandra
       - CASSANDRA_PORT=${CASSANDRA_PORT:-9042}
       - CASSANDRA_KEYSPACE=nl2pipeline
+      - MOCK_LLM=${MOCK_LLM:-false}
     volumes:
       - ./models/phi4-mini:/model
       - /var/run/docker.sock:/var/run/docker.sock
@@ -193,13 +194,6 @@ services:
     networks:
       - nl2pipeline-net
     restart: unless-stopped
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
 
   e2e-test:
     build:
