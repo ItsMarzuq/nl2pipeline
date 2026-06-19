@@ -1,0 +1,15 @@
+{
+  "environment": "prod-cluster-01",
+  "node_context": "local-worker-mesh",
+  "kafka_topics": [
+    "clickstream_logs",
+    "financial_transactions",
+    "security_audit_events"
+  ],
+  "cassandra_tables": [
+    "hourly_metrics",
+    "fraud_alerts_mv",
+    "session_rollups",
+    "example"
+  ]
+}
