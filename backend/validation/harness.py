@@ -3,9 +3,11 @@ from __future__ import annotations
 import logging
 import os
 import re
+import signal
 import subprocess
 import tempfile
 from pathlib import Path
+from typing import Any
 
 log = logging.getLogger(__name__)
 
@@ -22,13 +24,18 @@ _SPARK_PACKAGES = ",".join([
 ])
 
 
-def run_harness(code: str, attempt: int) -> list[tuple[str, str | None]]:
+def run_harness(code: str, attempt: int, cassandra_session: Any = None) -> list[tuple[str, str | None]]:
     """
     Three-stage validation harness.
 
     V1 — Ruff lint    : static analysis, catches syntax + style errors
-    V2 — spark-submit : docker-execs spark-submit in the Spark container
-    V3 — Cassandra    : verifies referenced tables exist in the live cluster
+    V2 — spark-submit : runs spark-submit as a local subprocess in this
+                         container (local[*]), not against the dedicated
+                         Spark cluster — a smoke test, not a cluster deploy
+    V3 — Cassandra    : verifies referenced tables exist in the live cluster,
+                         using the single session opened at app startup
+                         (see backend/app.py) rather than a new connection
+                         per attempt.
 
     Returns a list of (stage_label, error_or_None) for each stage executed.
     Stops at the first failure so remaining stages are not run.
@@ -37,9 +44,9 @@ def run_harness(code: str, attempt: int) -> list[tuple[str, str | None]]:
 
     results: list[tuple[str, str | None]] = []
     for label, stage_fn in [
-        ("V1 lint",      _stage1_lint),
-        ("V2 structure", _stage2_spark_submit),
-        ("V3 cassandra", _stage3_cassandra),
+        ("V1 lint",      lambda c: _stage1_lint(c)),
+        ("V2 structure", lambda c: _stage2_spark_submit(c)),
+        ("V3 cassandra", lambda c: _stage3_cassandra(c, cassandra_session)),
     ]:
         error = stage_fn(code)
         results.append((label, error))
@@ -83,15 +90,18 @@ def _stage1_lint(code: str) -> str | None:
 
 
 # ---------------------------------------------------------------------------
-# Stage 2 — spark-submit via Docker exec
+# Stage 2 — spark-submit via local subprocess
 # ---------------------------------------------------------------------------
 
 def _extract_spark_errors(stdout: str, stderr: str) -> str:
     """Return error-relevant lines from spark-submit output."""
-    # Python tracebacks go to stderr — show it first
+    # Python tracebacks go to stderr — show it first. WARN lines are excluded
+    # deliberately: normal Spark/Kafka-connector warnings would otherwise be
+    # fed back to the model as if they were failures, wasting a correction
+    # attempt on noise.
     error_lines = [
         line for line in (stdout + "\n" + stderr).splitlines()
-        if any(kw in line for kw in ("ERROR", "Exception", "Traceback", "Error:", "raise ", "WARN"))
+        if any(kw in line for kw in ("ERROR", "Exception", "Traceback", "Error:", "raise "))
     ]
     if error_lines:
         return "\n".join(error_lines[:50])
@@ -106,13 +116,24 @@ _SPARK_JAR_CACHE = "/opt/spark-jars"
 
 def _stage2_spark_submit(code: str) -> str | None:
     """
-    Write the generated code to a temp file and run spark-submit locally
-    inside the backend container (local[*] mode).
+    Write the generated code to a temp file and run spark-submit as a local
+    subprocess inside the backend container (local[*] mode) — a smoke test
+    against this container's own Spark install, not the dedicated `spark`/
+    `spark-worker` cluster in docker-compose.
 
     Two-phase timeout:
-      Phase 1 (30s) — catches import/syntax/config errors before Kafka connect.
-      Phase 2 (30s) — catches crashes after Kafka connects (e.g. schema mismatch).
-      Still running after both phases → pass (streaming job on awaitTermination).
+      Phase 1 (15s) — catches import/syntax/config errors before Kafka connect.
+      Phase 2 (15s) — catches crashes after Kafka connects (e.g. schema mismatch).
+      Still running after both phases → pass (streaming job on awaitTermination) —
+      the process group is then terminated in `finally` since the harness only
+      needs proof it didn't crash, not for the job to keep running.
+
+    spark-submit's exec chain ends in a JVM which, for a PySpark job, forks a
+    *separate* Python driver subprocess connected back via Py4J. Killing only
+    the top-level PID (especially via SIGKILL, which gives the JVM no chance
+    to run shutdown hooks) leaves that forked Python process orphaned. The
+    job is launched in its own process group (`start_new_session=True`) so
+    cleanup can signal the whole group at once via os.killpg.
     """
     import threading
 
@@ -132,64 +153,98 @@ def _stage2_spark_submit(code: str) -> str | None:
         job_path,
     ]
 
+    proc = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        start_new_session=True,
+    )
     result_holder: dict = {}
     done_event = threading.Event()
 
-    def _run() -> None:
-        result_holder["proc"] = subprocess.run(
-            cmd, capture_output=True, text=True
-        )
+    def _wait() -> None:
+        result_holder["stdout"], result_holder["stderr"] = proc.communicate()
         done_event.set()
 
     try:
-        thread = threading.Thread(target=_run, daemon=True)
+        thread = threading.Thread(target=_wait, daemon=True)
         thread.start()
 
         # Phase 1 — startup errors
         if done_event.wait(timeout=_SPARK_STARTUP_TIMEOUT):
-            proc = result_holder["proc"]
             log.info("spark-submit exited with returncode=%d", proc.returncode)
-            log.debug("spark stderr: %s", proc.stderr[-1000:])
+            log.debug("spark stderr: %s", result_holder["stderr"][-1000:])
             if proc.returncode != 0:
-                return f"spark-submit failed at startup:\n{_extract_spark_errors(proc.stdout, proc.stderr)}"
+                return f"spark-submit failed at startup:\n{_extract_spark_errors(result_holder['stdout'], result_holder['stderr'])}"
             return None
 
         log.info("spark-submit survived startup (%ds) — checking post-Kafka-connect stability", _SPARK_STARTUP_TIMEOUT)
 
         # Phase 2 — post-Kafka-connect crashes
         if done_event.wait(timeout=_SPARK_STABILITY_TIMEOUT):
-            proc = result_holder["proc"]
             if proc.returncode != 0:
-                return f"spark-submit crashed after Kafka connect:\n{_extract_spark_errors(proc.stdout, proc.stderr)}"
+                return f"spark-submit crashed after Kafka connect:\n{_extract_spark_errors(result_holder['stdout'], result_holder['stderr'])}"
             return None
 
-        log.info("spark-submit stable after %ds — treating as pass", _SPARK_STARTUP_TIMEOUT + _SPARK_STABILITY_TIMEOUT)
+        log.info(
+            "spark-submit stable after %ds — treating as pass, terminating process",
+            _SPARK_STARTUP_TIMEOUT + _SPARK_STABILITY_TIMEOUT,
+        )
         return None
 
     finally:
+        if proc.poll() is None:
+            _kill_process_group(proc)
         Path(job_path).unlink(missing_ok=True)
+
+
+def _kill_process_group(proc: subprocess.Popen) -> None:
+    """
+    Terminate *proc* and every process it forked (the JVM's own PySpark
+    driver child included) by signalling the whole process group rather
+    than just the top-level PID — see _stage2_spark_submit's docstring.
+    """
+    try:
+        pgid = os.getpgid(proc.pid)
+    except ProcessLookupError:
+        return
+
+    try:
+        os.killpg(pgid, signal.SIGTERM)
+        proc.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(pgid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            log.warning("spark-submit process group %d did not die after SIGKILL", pgid)
+    except ProcessLookupError:
+        pass
 
 
 # ---------------------------------------------------------------------------
 # Stage 3 — Cassandra schema check
 # ---------------------------------------------------------------------------
 
-def _stage3_cassandra(code: str) -> str | None:
+def _stage3_cassandra(code: str, session: Any) -> str | None:
     """
     Extract Cassandra keyspace + table references from the generated code
-    and verify they exist in the live cluster.
+    and verify they exist in the live cluster, using the shared session
+    opened once at app startup (backend/app.py lifespan via
+    backend/cassandra_client.py) instead of opening a new connection per
+    validation attempt.
 
-    Auth is optional — PlainTextAuthProvider is only used when both
-    CASSANDRA_USERNAME and CASSANDRA_PASSWORD env vars are set.  The
-    default Cassandra setup (AllowAllAuthenticator) works without creds.
-
-    Keyspace falls back to CASSANDRA_KEYSPACE env var (default: nl2pipeline)
-    when the generated code doesn't specify one explicitly.
+    Falls back to the session's bound keyspace when the generated code
+    doesn't specify one explicitly via `.option("keyspace", ...)`.
 
     Returns None (pass) if:
       - No Cassandra table references found in the code
-      - The cluster is unreachable (non-fatal)
-      - cassandra-driver is not installed
+      - No session is available (cluster unreachable at startup, or
+        cassandra-driver not installed) — non-fatal
     """
     keyspaces = re.findall(
         r'\.option\s*\(\s*["\']keyspace["\']\s*,\s*["\']([^"\']+)["\']\s*\)', code
@@ -201,37 +256,19 @@ def _stage3_cassandra(code: str) -> str | None:
     if not tables:
         return None
 
+    if session is None:
+        log.warning("Cassandra session unavailable — skipping schema check.")
+        return None
+
     try:
-        from cassandra.cluster import Cluster  # noqa: PLC0415
-
-        host = os.environ.get("CASSANDRA_HOST", "cassandra")
-        port = int(os.environ.get("CASSANDRA_PORT", "9042"))
-        username = os.environ.get("CASSANDRA_USERNAME", "")
-        password = os.environ.get("CASSANDRA_PASSWORD", "")
-
-        auth_provider = None
-        if username and password:
-            from cassandra.auth import PlainTextAuthProvider  # noqa: PLC0415
-            auth_provider = PlainTextAuthProvider(username, password)
-
-        cluster = Cluster(
-            [host],
-            port=port,
-            auth_provider=auth_provider,
-            connect_timeout=5,
-        )
-        session = cluster.connect()
-
         existing = {
             (row.keyspace_name, row.table_name)
             for row in session.execute(
                 "SELECT keyspace_name, table_name FROM system_schema.tables"
             )
         }
-        cluster.shutdown()
 
-        default_keyspace = os.environ.get("CASSANDRA_KEYSPACE", "nl2pipeline")
-        keyspace = keyspaces[0] if keyspaces else default_keyspace
+        keyspace = keyspaces[0] if keyspaces else (session.keyspace or "nl2pipeline")
 
         missing = [
             f"{keyspace}.{tbl}"
@@ -246,9 +283,6 @@ def _stage3_cassandra(code: str) -> str | None:
             )
         return None
 
-    except ImportError:
-        log.warning("cassandra-driver not installed — skipping Cassandra schema check.")
-        return None
     except Exception as exc:
-        log.warning("Cassandra schema check skipped (cluster unreachable): %s", exc)
+        log.warning("Cassandra schema check skipped (query failed): %s", exc)
         return None

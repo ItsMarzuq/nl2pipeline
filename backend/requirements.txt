@@ -7,7 +7,6 @@ pydantic-settings>=2.2
 # --- Utilities ---
 pyyaml>=6.0
 ruff>=0.4
-docker>=7.0
 
 # --- Cassandra (harness schema check) ---
 cassandra-driver>=3.29
@@ -15,11 +14,6 @@ cassandra-driver>=3.29
 # --- Spark (harness execution) ---
 pyspark==3.5.1
 
-# --- LLM inference ---
-transformers>=4.40
-peft>=0.10
-bitsandbytes>=0.43
-accelerate>=0.30
-
-# --- LangChain ---
-langchain-community>=0.2
+# --- LLM inference (served by Ollama, see docker-compose.yaml) ---
+langchain-core>=0.2
+langchain-ollama>=0.1

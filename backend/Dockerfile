@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM pytorch/pytorch:2.12.0-cuda12.6-cudnn9-runtime
+FROM python:3.11-slim-bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app

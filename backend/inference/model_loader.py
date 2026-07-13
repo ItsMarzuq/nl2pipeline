@@ -1,96 +1,38 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
 
-import torch
-from langchain_community.llms import HuggingFacePipeline
-from peft import PeftModel
-from transformers import (
-    AutoModelForCausalLM,
-    AutoTokenizer,
-    BitsAndBytesConfig,
-    pipeline,
-)
+from langchain_ollama import ChatOllama
 
 log = logging.getLogger(__name__)
 
 
-def load_llm(
-    base_model_id: str,
-    adapter_path: str | None,
-    max_new_tokens: int = 1024,
-) -> tuple[Any, HuggingFacePipeline]:
+def load_llm(base_url: str, model: str, max_new_tokens: int = 1024, num_ctx: int = 6144) -> ChatOllama:
     """
-    Load tokenizer and model, optionally apply a LoRA adapter, and return
-    (tokenizer, HuggingFacePipeline) for use in the pipeline engine.
+    Build a ChatOllama client pointed at an already-running Ollama server.
 
-    Parameters
-    ----------
-    base_model_id:
-        HuggingFace hub ID or local path (e.g. /model for bind-mount).
-    adapter_path:
-        Local path to a PEFT adapter directory. Pass None to skip (base model only).
-    max_new_tokens:
-        Hard cap on tokens generated per call.
+    Ollama owns model loading, caching, and quantization on its side (GGUF
+    via llama.cpp) — this just wires up the HTTP client. The server must
+    already have `model` pulled (see the `ollama-pull` init step in
+    docker-compose.yaml).
     """
-    log.info("Loading tokenizer: %s", base_model_id)
-    tokenizer = AutoTokenizer.from_pretrained(base_model_id, use_fast=True)
-    tokenizer.pad_token = tokenizer.eos_token
-
-    cuda_available = torch.cuda.is_available()
-
-    if cuda_available:
-        log.info("Loading base model: %s (4-bit NF4, CUDA)", base_model_id)
-        bnb_config = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_quant_type="nf4",
-            bnb_4bit_compute_dtype=torch.float16,
-            bnb_4bit_use_double_quant=True,
-        )
-        base_model = AutoModelForCausalLM.from_pretrained(
-            base_model_id,
-            quantization_config=bnb_config,
-            device_map="cuda:0",
-            dtype=torch.float16,
-            trust_remote_code=False,
-        )
-    else:
-        log.warning(
-            "CUDA not available — loading model in float32 on CPU. "
-            "Inference will be slow; enable GPU for production use."
-        )
-        base_model = AutoModelForCausalLM.from_pretrained(
-            base_model_id,
-            device_map="cpu",
-            torch_dtype=torch.float32,
-            trust_remote_code=False,
-        )
-
-    if adapter_path:
-        log.info("Applying LoRA adapter: %s", adapter_path)
-        model = PeftModel.from_pretrained(base_model, adapter_path)
-    else:
-        log.warning("No ADAPTER_PATH set — running base model without fine-tuning.")
-        model = base_model
-
-    hf_pipe = pipeline(
-        "text-generation",
+    log.info("Connecting to Ollama at %s (model=%s)", base_url, model)
+    llm = ChatOllama(
+        base_url=base_url,
         model=model,
-        tokenizer=tokenizer,
-        max_new_tokens=max_new_tokens,
-        do_sample=False,
-        temperature=None,
-        top_p=None,
-        return_full_text=False,
-        pad_token_id=tokenizer.eos_token_id,
+        num_predict=max_new_tokens,
+        num_ctx=num_ctx,
+        temperature=0,
+        # qwen3.5 is a hybrid-reasoning model that otherwise spends its token
+        # budget on hidden chain-of-thought before emitting the code block —
+        # tested with reasoning enabled and it still hallucinated PySpark API
+        # names, just slower (see engine debug session), so keep it off.
+        reasoning=False,
     )
-
-    llm = HuggingFacePipeline(pipeline=hf_pipe)
     log.info(
-        "Model ready — base=%s  adapter=%s  max_new_tokens=%d",
-        base_model_id,
-        adapter_path or "none",
+        "Ollama client ready — model=%s  max_new_tokens=%d  num_ctx=%d",
+        model,
         max_new_tokens,
+        num_ctx,
     )
-    return tokenizer, llm
+    return llm

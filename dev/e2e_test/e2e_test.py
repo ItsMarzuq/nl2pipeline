@@ -29,7 +29,6 @@ import os
 import random
 import sys
 import time
-import uuid
 from datetime import datetime, timezone
 
 # ---------------------------------------------------------------------------
@@ -80,33 +79,24 @@ LOCATIONS = {
 # ===========================================================================
 
 def make_event(event_id: int) -> dict:
-    actor1_country = random.choice(COUNTRIES)
-    actor2_country = random.choice(COUNTRIES)
-    action_country = random.choice(COUNTRIES)
-    lat, lon, location = LOCATIONS[action_country]
+    country = random.choice(COUNTRIES)
+    lat, lon, _location = LOCATIONS[country]
     now = datetime.now(timezone.utc)
     return {
-        "global_event_id":  str(event_id),
-        "event_date":       now.strftime("%Y-%m-%d"),
-        "date_added":       now.strftime("%Y-%m-%d %H:%M:%S"),
-        "actor1_country":   actor1_country,
-        "actor1_name":      random.choice(ACTORS),
-        "actor2_country":   actor2_country,
-        "actor2_name":      random.choice(ACTORS),
-        "event_code":       random.choice(EVENT_CODES),
-        "event_base_code":  random.choice(EVENT_CODES),
-        "event_root_code":  random.choice(EVENT_CODES),
-        "quad_class":       random.randint(1, 4),
-        "goldstein_scale":  round(random.uniform(-10.0, 10.0), 2),
-        "num_mentions":     random.randint(1, 50),
-        "num_sources":      random.randint(1, 10),
-        "num_articles":     random.randint(1, 20),
-        "avg_tone":         round(random.uniform(-10.0, 10.0), 2),
-        "action_country":   action_country,
-        "action_location":  location,
-        "action_lat":       lat,
-        "action_long":      lon,
-        "source_url":       f"https://example-news.com/article/{uuid.uuid4().hex[:8]}",
+        "event_id":       str(event_id),
+        "event_date":     now.strftime("%Y-%m-%d"),
+        "actor1":         random.choice(ACTORS),
+        "actor2":         random.choice(ACTORS),
+        "event_code":     random.choice(EVENT_CODES),
+        "country":        country,
+        "lat":            lat,
+        "lon":            lon,
+        "tone":           round(random.uniform(-10.0, 10.0), 2),
+        "num_mentions":   random.randint(1, 50),
+        "num_sources":    random.randint(1, 10),
+        "num_articles":   random.randint(1, 20),
+        "is_root_event":  random.choice([True, False]),
+        "ts":             now.isoformat().replace("+00:00", "Z"),
     }
 
 
@@ -134,7 +124,7 @@ def run_producer() -> None:
         try:
             producer.produce(
                 topic    = KAFKA_TOPIC,
-                key      = event["global_event_id"],
+                key      = event["event_id"],
                 value    = json.dumps(event),
                 callback = on_delivery,
             )
@@ -164,31 +154,24 @@ def run_spark_job() -> None:
     from pyspark.sql.functions import col, from_json, avg, lit, current_timestamp
     from pyspark.sql.types import (
         StructType, StructField,
-        StringType, FloatType, IntegerType,
+        StringType, FloatType, IntegerType, BooleanType,
     )
 
     GDELT_SCHEMA = StructType([
-        StructField("global_event_id",  StringType(),  False),
-        StructField("event_date",       StringType(),  False),
-        StructField("date_added",       StringType(),  False),
-        StructField("actor1_country",   StringType(),  True),
-        StructField("actor1_name",      StringType(),  True),
-        StructField("actor2_country",   StringType(),  True),
-        StructField("actor2_name",      StringType(),  True),
-        StructField("event_code",       StringType(),  True),
-        StructField("event_base_code",  StringType(),  True),
-        StructField("event_root_code",  StringType(),  True),
-        StructField("quad_class",       IntegerType(), True),
-        StructField("goldstein_scale",  FloatType(),   True),
-        StructField("num_mentions",     IntegerType(), True),
-        StructField("num_sources",      IntegerType(), True),
-        StructField("num_articles",     IntegerType(), True),
-        StructField("avg_tone",         FloatType(),   True),
-        StructField("action_country",   StringType(),  True),
-        StructField("action_location",  StringType(),  True),
-        StructField("action_lat",       FloatType(),   True),
-        StructField("action_long",      FloatType(),   True),
-        StructField("source_url",       StringType(),  True),
+        StructField("event_id",       StringType(),  False),
+        StructField("event_date",     StringType(),  False),
+        StructField("actor1",         StringType(),  True),
+        StructField("actor2",         StringType(),  True),
+        StructField("event_code",     StringType(),  True),
+        StructField("country",        StringType(),  True),
+        StructField("lat",            FloatType(),   True),
+        StructField("lon",            FloatType(),   True),
+        StructField("tone",           FloatType(),   True),
+        StructField("num_mentions",   IntegerType(), True),
+        StructField("num_sources",    IntegerType(), True),
+        StructField("num_articles",   IntegerType(), True),
+        StructField("is_root_event",  BooleanType(), True),
+        StructField("ts",             StringType(),  False),
     ])
 
     spark = (
@@ -222,15 +205,15 @@ def run_spark_job() -> None:
         raw_df
         .select(from_json(col("value").cast("string"), GDELT_SCHEMA).alias("d"))
         .select("d.*")
-        .filter(col("action_country").isNotNull())
-        .filter(col("avg_tone").isNotNull())
-        .groupBy("action_country")
-        .agg(avg("avg_tone").alias("metric_value"))
+        .filter(col("country").isNotNull())
+        .filter(col("tone").isNotNull())
+        .groupBy("country")
+        .agg(avg("tone").alias("metric_value"))
         .withColumn("source_topic", lit(KAFKA_TOPIC))
         .withColumn("window_start", current_timestamp())
         .withColumn("window_end",   current_timestamp())
         .withColumn("metric_name",  lit("avg_tone"))
-        .withColumn("group_key",    col("action_country"))
+        .withColumn("group_key",    col("country"))
         .select(
             "source_topic", "window_start", "group_key",
             "metric_name", col("metric_value").cast("float"), "window_end",
