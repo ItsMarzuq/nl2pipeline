@@ -3,8 +3,7 @@ import logging
 import time
 from uuid import uuid4
 
-from kafka import KafkaConsumer
-from kafka.errors import NoBrokersAvailable
+from confluent_kafka import Consumer, KafkaException
 
 from app.logging_config import setup_logging
 from app.settings import CONSUMER_MAX_MESSAGES, KAFKA_BOOTSTRAP, KAFKA_TOPIC
@@ -12,24 +11,25 @@ from app.settings import CONSUMER_MAX_MESSAGES, KAFKA_BOOTSTRAP, KAFKA_TOPIC
 
 logger = logging.getLogger(__name__)
 
+_POLL_IDLE_TIMEOUT = 15.0  # seconds with no message before giving up
 
-def create_consumer() -> KafkaConsumer:
+
+def create_consumer() -> Consumer:
     for attempt in range(1, 11):
         try:
-            consumer = KafkaConsumer(
-                KAFKA_TOPIC,
-                bootstrap_servers=KAFKA_BOOTSTRAP,
-                auto_offset_reset="earliest",
-                enable_auto_commit=True,
-                group_id=f"gdelt-test-consumer-{uuid4()}",
-                value_deserializer=lambda value: json.loads(value.decode("utf-8")),
-                consumer_timeout_ms=15000,
-            )
+            consumer = Consumer({
+                "bootstrap.servers": KAFKA_BOOTSTRAP,
+                "group.id": f"gdelt-test-consumer-{uuid4()}",
+                "auto.offset.reset": "earliest",
+                "enable.auto.commit": True,
+            })
+            consumer.list_topics(timeout=5)
+            consumer.subscribe([KAFKA_TOPIC])
             logger.info("Connected consumer to Kafka")
             return consumer
 
-        except NoBrokersAvailable:
-            logger.warning("Kafka not available yet. Attempt %s/10", attempt)
+        except KafkaException as exc:
+            logger.warning("Kafka not available yet (%s). Attempt %s/10", exc, attempt)
             time.sleep(3)
 
     raise RuntimeError("Could not connect to Kafka")
@@ -44,16 +44,25 @@ def main() -> None:
 
     count = 0
 
-    for message in consumer:
-        print(json.dumps(message.value, indent=2))
-        count += 1
+    try:
+        while count < CONSUMER_MAX_MESSAGES:
+            msg = consumer.poll(timeout=_POLL_IDLE_TIMEOUT)
 
-        if count >= CONSUMER_MAX_MESSAGES:
-            break
+            if msg is None:
+                logger.info("No more messages after %ss idle — stopping.", _POLL_IDLE_TIMEOUT)
+                break
+
+            if msg.error():
+                logger.error("Consumer error: %s", msg.error())
+                continue
+
+            value = json.loads(msg.value().decode("utf-8"))
+            print(json.dumps(value, indent=2))
+            count += 1
+    finally:
+        consumer.close()
 
     logger.info("Consumer test complete. Messages read: %s", count)
-
-    consumer.close()
 
 
 if __name__ == "__main__":

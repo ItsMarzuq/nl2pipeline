@@ -1,0 +1,19 @@
+# --- Web framework ---
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+pydantic>=2.7
+pydantic-settings>=2.2
+
+# --- Utilities ---
+pyyaml>=6.0
+ruff>=0.4
+
+# --- Cassandra (harness schema check) ---
+cassandra-driver>=3.29
+
+# --- Spark (harness execution) ---
+pyspark==3.5.1
+
+# --- LLM inference (served by Ollama, see docker-compose.yaml) ---
+langchain-core>=0.2
+langchain-ollama>=0.1

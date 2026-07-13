@@ -68,11 +68,13 @@ services:
     ports:
       - "${SPARK_MASTER_WEBUI_PORT}:${SPARK_MASTER_WEBUI_PORT}"
       - "${SPARK_MASTER_PORT}:${SPARK_MASTER_PORT}"
+    volumes:
+      - spark-jobs:/spark-jobs
     networks:
       - nl2pipeline-net
 
   spark-worker:
-    image: apache/spark:3.5.1
+    image: apache/spark:latest 
     container_name: nl2pipeline-spark-worker
     depends_on:
       - spark
@@ -119,7 +121,7 @@ services:
     networks:
       - nl2pipeline-net
     restart: "no"
-  
+
   gdelt-producer:
     build: ./gdelt_kafka_ingestion
     container_name: gdelt-producer
@@ -131,6 +133,8 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
     restart: on-failure
     networks:
       - nl2pipeline-net
@@ -161,6 +165,77 @@ services:
         condition: service_healthy
     networks:
       - nl2pipeline-net
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: nl2pipeline-ollama
+    environment:
+      - OLLAMA_FLASH_ATTENTION=${OLLAMA_FLASH_ATTENTION:-1}
+      - OLLAMA_KV_CACHE_TYPE=${OLLAMA_KV_CACHE_TYPE:-q8_0}
+      - OLLAMA_KEEP_ALIVE=${OLLAMA_KEEP_ALIVE:-30m}
+    volumes:
+      - ollama-data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - nl2pipeline-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  ollama-pull:
+    image: ollama/ollama:latest
+    container_name: nl2pipeline-ollama-pull
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    entrypoint: ["ollama"]
+    command: ["pull", "${OLLAMA_MODEL:-qwen3.5:4b}"]
+    networks:
+      - nl2pipeline-net
+    restart: "no"
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: nl2pipeline-backend
+    depends_on:
+      cassandra-init:
+        condition: service_completed_successfully
+      kafka-init:
+        condition: service_completed_successfully
+      ollama-pull:
+        condition: service_completed_successfully
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen3.5:4b}
+      - ENV_YAML_PATH=backend/metadata.yaml
+      - MAX_NEW_TOKENS=${MAX_NEW_TOKENS:-1024}
+      - OLLAMA_NUM_CTX=${OLLAMA_NUM_CTX:-6144}
+      - MAX_ATTEMPTS=${MAX_ATTEMPTS:-3}
+      - CASSANDRA_HOST=cassandra
+      - CASSANDRA_PORT=${CASSANDRA_PORT:-9042}
+      - CASSANDRA_KEYSPACE=nl2pipeline
+    volumes:
+      - spark-jobs:/spark-jobs
+    networks:
+      - nl2pipeline-net
+    restart: unless-stopped
+
   e2e-test:
     build:
       context: .
@@ -198,6 +273,9 @@ services:
 volumes:
   cassandra-data:
   zookeeper-data:
+  spark-jobs:
+  gdelt-data:
+  ollama-data:
 
 networks:
   nl2pipeline-net:
