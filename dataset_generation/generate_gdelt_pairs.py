@@ -32,38 +32,43 @@ DIFFICULTIES = ["easy", "medium", "hard"]
 
 SEED_IDEAS = {
     "filtering": [
-        "Filter GDELT events by country",
-        "Filter GDELT events by event code",
-        "Filter events with high number of mentions",
-        "Filter events by positive or negative average tone"
+        "Filter for sporting events, athletic competitions, or Olympic coverage",
+        "Extract reports concerning terrorist activity, rebel conflicts, or militia insurgencies",
+        "Isolate media and entertainment coverage, movie releases, film festivals, or celebrity news",
+        "Find news involving medical outbreaks, public health campaigns, or hospital updates",
+        "Filter for corporate announcements, business mergers, or financial market movements",
+        "Extract reports involving religious leaders, local clergy, or faith-based movements",
+        "Isolate academic research, university studies, or scientific discoveries"
     ],
     "aggregation": [
-        "Count events per country",
-        "Count events per event code",
-        "Calculate total mentions per country",
-        "Find top countries by event volume"
+        "Find which societal sectors (Sports, Business, Medical) get the most media attention",
+        "Calculate the total volume of violent versus non-violent rebel events",
+        "Compare average sentiment tone between medical coverage and commercial corporate news",
+        "Count how many times entertainers or media personnel are mentioned by region",
+        "Determine which industry sectors have the highest total count of recorded events"
     ],
     "trend_analysis": [
-        "Calculate daily event counts",
-        "Track average tone by day",
-        "Calculate event trends per country",
-        "Find days with unusually high event volume"
+        "Track the daily frequency of sports-related coverage over the course of the year",
+        "Monitor sudden spikes in reports concerning rebel activity or insurgent attacks",
+        "Analyze whether coverage of movie, theater, and entertainment events rises on weekends",
+        "Track weekly public sentiment shifts in articles covering scientific or medical updates",
+        "Identify anomalous spikes in financial and corporate business news"
     ],
     "data_quality": [
-        "Remove rows with missing country codes",
-        "Remove invalid event dates",
-        "Drop rows with missing average tone",
-        "Clean and standardise country fields"
+        "Cleanse the dataset by removing empty or null entries in the Actor Type classifications",
+        "Drop records where the actor identifier represents an invalid or corrupt category",
+        "Clean and standardize the Actor Type roles to uniform uppercase values",
+        "Filter out events where the recorded date falls outside the valid tracking parameters"
     ],
     "spark_to_parquet": [
-        "Read GDELT data and write transformed output to Parquet",
-        "Aggregate GDELT records and save results as Parquet",
-        "Generate country-level summaries and save to local Parquet"
+        "Save our processed athletic and sports event database as a clean Parquet table",
+        "Export compiled reports on scientific innovations and educational programs to Parquet",
+        "Archive filtered rebel and conflict records to partitioned security directories in Parquet"
     ],
     "spark_to_cassandra": [
-        "Write country event counts to Cassandra",
-        "Write daily event counts to Cassandra",
-        "Write country average tone summary to Cassandra"
+        "Export the aggregated business sentiment statistics directly to Cassandra",
+        "Store the daily volume of global entertainment and media updates into Cassandra",
+        "Load daily calculated health and medical alerts into our Cassandra pipeline"
     ]
 }
 
@@ -79,15 +84,36 @@ def build_teacher_prompt(pair_id: int, category: str, difficulty: str, environme
     seed_task = random.choice(SEED_IDEAS[category])
 
     return f"""
-You are generating a synthetic training example for an NL2Pipeline system.
+You are generating a highly diverse synthetic training pair (User Request -> PySpark Code) for an NL2Pipeline platform targeting GDELT.
 
-The goal is to create one natural-language prompt and one corresponding executable PySpark code answer.
-
-The project uses the following environment metadata:
-
+The project environment schema details are as follows:
 {environment_text}
 
-Generation constraints:
+---
+
+### 🚨 CONCEPTUAL ARCHITECTURAL RULE (THE TRANSLATION LAYER)
+You must translate real-world human concepts spanning sports, entertainment, business, science, religion, and conflict into the correct database codes. 
+
+1. THE "user" FIELD MUST ONLY CONTAIN HUMAN-CENTRIC LANGUAGE:
+- Do not mention technical column names (e.g., 'Actor1Type1Code', 'event_code', 'avg_tone').
+- Do not mention programming syntax or code.
+- Instead of using technical jargon, the analyst will describe a normal social, corporate, or athletic domain (e.g., "Find news about major sporting games" or "Track terrorist threat spikes").
+
+2. TRANSLATION DIRECTORY FOR THE "assistant" PYSPARK CODE:
+Map the analyst's domain concepts to these specific GDELT CAMEO Actor Type codes:
+- "Sports / Athletes / Teams / Olympic Games" -> Use `Actor1Type1Code == 'ATH'` (or Actor2Type1Code)
+- "Terrorism / Rebels / Militias / Insurgencies" -> Use `Actor1Type1Code.isin('REB', 'INS')`
+- "Movies / Entertainment / Celebrities / TV / Journalism / News" -> Use `Actor1Type1Code.isin('MED', 'ENT')`
+- "Medicine / Health / Public Healthcare / Diseases / Doctors" -> Use `Actor1Type1Code == 'HLH'`
+- "Business / Corporations / Markets / Companies / Executives" -> Use `Actor1Type1Code == 'BUS'`
+- "Religions / Clergy / Churches / Spiritual Leaders" -> Use `Actor1Type1Code == 'REL'`
+- "Education / Universities / Scientific Research / Academics" -> Use `Actor1Type1Code.isin('EDU', 'SCI')`
+
+Always construct realistic filtering logic in PySpark using the exact column names present in the environment schema (e.g., if the schema uses 'actor1_type1' instead of 'Actor1Type1Code', use the schema's exact case).
+
+---
+
+### GENERATION CONSTRAINTS:
 - Dataset must be GDELT only.
 - Use only columns listed in the environment metadata.
 - Use only paths listed in the environment metadata.
@@ -112,8 +138,8 @@ Return JSON in exactly this structure:
   "category": "{category}",
   "difficulty": "{difficulty}",
   "source_dataset": "gdelt",
-  "user": "natural language pipeline request here",
-  "assistant": "complete PySpark code here",
+  "user": "A completely natural, realistic, domain-level query.",
+  "assistant": "complete PySpark code here translating the user's human concepts into database codes",
   "metadata": {{
     "input_path": "data/gdelt/gdelt_events_sample.csv",
     "processing_engine": "spark",
@@ -156,7 +182,7 @@ def generate_pair(pair_id: int, environment_text: str) -> dict:
 
     response = client.responses.create(
         model="gpt-4o",
-        instructions="You are a strict JSON generator for synthetic NL2Pipeline training data.",
+        instructions="You are a strict JSON generator for synthetic NL2Pipeline training data. You never let human user queries leak raw database column names or numerical code details.",
         input=prompt,
         temperature=0.7
     )

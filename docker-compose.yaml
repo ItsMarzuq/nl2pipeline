@@ -85,7 +85,7 @@ services:
       - SPARK_WORKER_MEMORY=${SPARK_WORKER_MEMORY}
       - SPARK_WORKER_CORES=${SPARK_WORKER_CORES}
     ports:
-      - "${SPARK_WORKER_WEBUI_PORT}:${SPARK_WORKER_WEBUI_PORT}"
+      - "${SPARK_WORKER_WEBUI_PORT}:${SPARK_WORKER_WEBUI_PORT}" 
     networks:
       - nl2pipeline-net
 
@@ -207,6 +207,7 @@ services:
     restart: "no"
 
   backend:
+    platform: linux/arm64
     build:
       context: .
       dockerfile: backend/Dockerfile

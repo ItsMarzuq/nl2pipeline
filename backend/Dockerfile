@@ -4,14 +4,16 @@ FROM python:3.11-slim-bookworm
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 
+# Updated openjdk-17-jre-headless to openjdk-21-jre-headless
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
     python3-venv \
-    openjdk-17-jre-headless \
+    openjdk-21-jre-headless \
  && rm -rf /var/lib/apt/lists/*
 
-ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+# Updated home path framework to reference the arm64 java-21 path
+ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk-arm64
 
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
