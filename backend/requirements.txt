@@ -20,6 +20,8 @@ transformers>=4.40
 peft>=0.10
 bitsandbytes>=0.43
 accelerate>=0.30
+sentencepiece
+tiktoken
 
 # --- LangChain ---
 langchain-community>=0.2

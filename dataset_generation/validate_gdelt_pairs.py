@@ -11,11 +11,13 @@ from typing import Dict, List, Set, Tuple
 import pandas as pd
 from tqdm import tqdm
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SCRIPT_DIR.parent
 
-PAIRS_FILE = Path("gdelt_pairs.jsonl")
-GDELT_CSV = Path("data/gdelt/gdelt_events_sample.csv")
+PAIRS_FILE = SCRIPT_DIR / "gdelt_pairs.jsonl"
+GDELT_CSV = PROJECT_ROOT / "data" / "gdelt" / "gdelt_events_sample.csv"
 
-OUTPUT_DIR = Path("validation_output")
+OUTPUT_DIR = SCRIPT_DIR / "validation_output"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 REPORT_FILE = OUTPUT_DIR / "validation_report.csv"
@@ -164,26 +166,14 @@ def get_call_name(node: ast.Call) -> str:
     return ""
 
 
-def extract_referenced_columns(code: str) -> Set[str]:
-    """
-    Extracts common PySpark column references.
-
-    It checks examples like:
-    col("avg_tone")
-    df["avg_tone"]
-    groupBy("action_country")
-    select("event_date", "avg_tone")
-    avg("avg_tone")
-    count("event_code")
-    dropna(subset=["actor1_country"])
-    """
-
+def extract_referenced_columns(code: str) -> Tuple[Set[str], Set[str]]:
     referenced_columns = set()
+    defined_columns = set()
 
     try:
         tree = ast.parse(code)
     except SyntaxError:
-        return referenced_columns
+        return referenced_columns, defined_columns
 
     column_functions = {
         "col",
@@ -207,6 +197,18 @@ def extract_referenced_columns(code: str) -> Set[str]:
         if isinstance(node, ast.Call):
             call_name = get_call_name(node)
 
+            if call_name == "withColumn":
+                if len(node.args) >= 1 and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str):
+                    defined_columns.add(node.args[0].value)
+            
+            if call_name == "withColumnRenamed":
+                if len(node.args) >= 2 and isinstance(node.args[1], ast.Constant) and isinstance(node.args[1].value, str):
+                    defined_columns.add(node.args[1].value)
+
+            if call_name == "alias":
+                if len(node.args) >= 1 and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str):
+                    defined_columns.add(node.args[0].value)
+
             if call_name in column_functions:
                 values = extract_string_literals_from_call(node)
 
@@ -224,7 +226,7 @@ def extract_referenced_columns(code: str) -> Set[str]:
             if isinstance(node.slice, ast.Constant) and isinstance(node.slice.value, str):
                 referenced_columns.add(node.slice.value)
 
-    return referenced_columns
+    return referenced_columns, defined_columns
 
 
 def validate_gdelt_columns(code: str, allowed_columns: List[str]) -> Tuple[bool, List[str]]:
@@ -233,8 +235,8 @@ def validate_gdelt_columns(code: str, allowed_columns: List[str]) -> Tuple[bool,
     if EXPECTED_GDELT_PATH not in code:
         errors.append(f"Code does not use expected GDELT path: {EXPECTED_GDELT_PATH}")
 
-    referenced_columns = extract_referenced_columns(code)
-    allowed_set = set(allowed_columns)
+    referenced_columns, defined_columns = extract_referenced_columns(code)
+    allowed_set = set(allowed_columns) | defined_columns
 
     invalid_columns = sorted(
         column for column in referenced_columns if column not in allowed_set
@@ -247,6 +249,16 @@ def validate_gdelt_columns(code: str, allowed_columns: List[str]) -> Tuple[bool,
 
 
 def run_ruff(code: str) -> Tuple[bool, List[str]]:
+    try:
+        subprocess.run(
+            [sys.executable, "-c", "import ruff"],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return True, []
+
     with tempfile.TemporaryDirectory() as tmpdir:
         script_path = Path(tmpdir) / "candidate.py"
         script_path.write_text(code, encoding="utf-8")

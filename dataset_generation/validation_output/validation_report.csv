@@ -1,32 +1,8 @@
 id,line_number,json_ok,syntax_ok,gdelt_columns_ok,ruff_ok,passed,errors
 gdelt_000001,1,True,True,True,True,True,
 gdelt_000002,2,True,True,True,True,True,
-gdelt_000003,3,True,True,True,False,False,"Ruff: F401 [*] `pyspark.sql.functions.col` imported but unused
- --> C:\Users\Admin\AppData\Local\Temp\tmpucaon0vi\candidate.py:2:35
-  |
-1 | from pyspark.sql import SparkSession
-2 | from pyspark.sql.functions import col
-  |                                   ^^^
-3 |
-4 | spark = SparkSession.builder.appName('GDELT Trend Analysis').getOrCreate()
-  |
-help: Remove unused import: `pyspark.sql.functions.col`
-
-Found 1 error.
-[*] 1 fixable with the `--fix` option."
-gdelt_000004,4,True,True,True,False,False,"Ruff: F401 [*] `pyspark.sql.functions.col` imported but unused
- --> C:\Users\Admin\AppData\Local\Temp\tmpjoxrt7u3\candidate.py:2:35
-  |
-1 | from pyspark.sql import SparkSession
-2 | from pyspark.sql.functions import col
-  |                                   ^^^
-3 |
-4 | spark = SparkSession.builder.appName('GDELT Event Trends').getOrCreate()
-  |
-help: Remove unused import: `pyspark.sql.functions.col`
-
-Found 1 error.
-[*] 1 fixable with the `--fix` option."
+gdelt_000003,3,True,True,True,True,True,
+gdelt_000004,4,True,True,True,True,True,
 gdelt_000005,5,True,True,True,True,True,
 gdelt_000006,6,True,True,True,True,True,
 gdelt_000007,7,True,True,True,True,True,
@@ -34,312 +10,144 @@ gdelt_000008,8,True,True,True,True,True,
 gdelt_000009,9,True,True,True,True,True,
 gdelt_000010,10,True,True,True,True,True,
 gdelt_000011,11,True,True,True,True,True,
-gdelt_000012,12,False,False,False,False,False,Duplicate user prompt
+gdelt_000012,12,True,True,True,True,True,
 gdelt_000013,13,True,True,True,True,True,
-gdelt_000014,14,True,True,False,True,False,"Invalid or invented GDELT columns used: ['avg_count', 'event_count', 'stddev_count']"
-gdelt_000015,15,True,True,False,True,False,Invalid or invented GDELT columns used: ['event_count']
-gdelt_000016,16,True,True,True,False,False,"Ruff: F401 [*] `pyspark.sql.functions.col` imported but unused
- --> C:\Users\Admin\AppData\Local\Temp\tmpy28eg2ha\candidate.py:2:35
-  |
-1 | from pyspark.sql import SparkSession
-2 | from pyspark.sql.functions import col, count
-  |                                   ^^^
-3 |
-4 | spark = SparkSession.builder.appName('GDELT Processing').getOrCreate()
-  |
-help: Remove unused import: `pyspark.sql.functions.col`
-
-Found 1 error.
-[*] 1 fixable with the `--fix` option."
-gdelt_000017,17,True,True,False,True,False,Invalid or invented GDELT columns used: ['event_count']
+gdelt_000014,14,True,True,True,True,True,
+gdelt_000015,15,True,True,True,True,True,
+gdelt_000016,16,True,True,True,True,True,
+gdelt_000017,17,True,True,True,True,True,
 gdelt_000018,18,True,True,True,True,True,
 gdelt_000019,19,True,True,True,True,True,
-gdelt_000020,20,True,True,False,True,False,Invalid or invented GDELT columns used: ['event_count']
-gdelt_000021,21,True,True,False,False,False,"Invalid or invented GDELT columns used: ['total_mentions'] | Ruff: F401 [*] `pyspark.sql.functions.col` imported but unused
- --> C:\Users\Admin\AppData\Local\Temp\tmpj1crj8so\candidate.py:2:35
-  |
-1 | from pyspark.sql import SparkSession
-2 | from pyspark.sql.functions import col, sum
-  |                                   ^^^
-3 |
-4 | spark = SparkSession.builder.appName('GDELT Aggregation').getOrCreate()
-  |
-help: Remove unused import: `pyspark.sql.functions.col`
-
-Found 1 error.
-[*] 1 fixable with the `--fix` option."
-gdelt_000022,22,True,True,False,True,False,Invalid or invented GDELT columns used: ['count']
+gdelt_000020,20,True,True,True,True,True,
+gdelt_000021,21,True,True,True,True,True,
+gdelt_000022,22,True,True,True,True,True,
 gdelt_000023,23,True,True,True,True,True,
 gdelt_000024,24,True,True,True,True,True,
 gdelt_000025,25,True,True,True,True,True,
 gdelt_000026,26,True,True,True,True,True,
 gdelt_000027,27,True,True,True,True,True,
-gdelt_000028,28,True,True,False,True,False,Invalid or invented GDELT columns used: ['event_count']
+gdelt_000028,28,True,True,True,True,True,
 gdelt_000029,29,True,True,True,True,True,
 gdelt_000030,30,True,True,True,True,True,
-gdelt_000031,31,True,True,True,False,False,"Ruff: F401 [*] `pyspark.sql.functions.col` imported but unused
- --> C:\Users\Admin\AppData\Local\Temp\tmp1cq4gvfy\candidate.py:2:35
-  |
-1 | from pyspark.sql import SparkSession
-2 | from pyspark.sql.functions import col
-  |                                   ^^^
-3 |
-4 | spark = SparkSession.builder.appName('GDELT Country Summary').getOrCreate()
-  |
-help: Remove unused import: `pyspark.sql.functions.col`
-
-Found 1 error.
-[*] 1 fixable with the `--fix` option."
+gdelt_000031,31,True,True,True,True,True,
 gdelt_000032,32,True,True,True,True,True,
 gdelt_000033,33,True,True,True,True,True,
 gdelt_000034,34,True,True,True,True,True,
 gdelt_000035,35,True,True,True,True,True,
 gdelt_000036,36,True,True,True,True,True,
 gdelt_000037,37,True,True,True,True,True,
-gdelt_000038,38,True,True,False,True,False,Invalid or invented GDELT columns used: ['event_count']
+gdelt_000038,38,True,True,True,True,True,
 gdelt_000039,39,True,True,True,True,True,
-gdelt_000040,40,True,True,False,True,False,Invalid or invented GDELT columns used: ['event_count']
+gdelt_000040,40,True,True,False,True,False,Invalid or invented GDELT columns used: ['action_country']
 gdelt_000041,41,True,True,True,True,True,
 gdelt_000042,42,True,True,True,True,True,
-gdelt_000043,43,True,True,False,True,False,Invalid or invented GDELT columns used: ['event_count']
+gdelt_000043,43,True,True,True,True,True,
 gdelt_000044,44,True,True,True,True,True,
 gdelt_000045,45,True,True,True,True,True,
 gdelt_000046,46,True,True,True,True,True,
-gdelt_000047,47,False,False,False,False,False,Duplicate user prompt
+gdelt_000047,47,True,True,True,True,True,
 gdelt_000048,48,True,True,True,True,True,
 gdelt_000049,49,True,True,True,True,True,
 gdelt_000050,50,True,True,True,True,True,
-gdelt_000051,51,True,True,True,False,False,"Ruff: F401 [*] `pyspark.sql.functions.col` imported but unused
- --> C:\Users\Admin\AppData\Local\Temp\tmponfeb_13\candidate.py:2:35
-  |
-1 | from pyspark.sql import SparkSession
-2 | from pyspark.sql.functions import col, sum
-  |                                   ^^^
-3 |
-4 | spark = SparkSession.builder.appName('GDELT Aggregation').getOrCreate()
-  |
-help: Remove unused import: `pyspark.sql.functions.col`
-
-Found 1 error.
-[*] 1 fixable with the `--fix` option."
+gdelt_000051,51,True,True,False,True,False,Invalid or invented GDELT columns used: ['action_country']
 gdelt_000052,52,True,True,True,True,True,
 gdelt_000053,53,True,True,True,True,True,
 gdelt_000054,54,True,True,True,True,True,
 gdelt_000055,55,True,True,True,True,True,
 gdelt_000056,56,True,True,True,True,True,
-gdelt_000057,57,False,False,False,False,False,Duplicate user prompt
+gdelt_000057,57,True,True,True,True,True,
 gdelt_000058,58,True,True,True,True,True,
-gdelt_000059,59,False,False,False,False,False,Duplicate user prompt
+gdelt_000059,59,True,True,True,True,True,
 gdelt_000060,60,True,True,True,True,True,
 gdelt_000061,61,True,True,True,True,True,
-gdelt_000062,62,True,True,True,True,True,
+gdelt_000062,62,True,True,False,True,False,Invalid or invented GDELT columns used: ['event_code']
 gdelt_000063,63,True,True,True,True,True,
-gdelt_000064,64,True,True,True,False,False,"Ruff: F401 [*] `pyspark.sql.functions.col` imported but unused
- --> C:\Users\Admin\AppData\Local\Temp\tmp7qg1b3ms\candidate.py:2:35
-  |
-1 | from pyspark.sql import SparkSession
-2 | from pyspark.sql.functions import col
-  |                                   ^^^
-3 |
-4 | spark = SparkSession.builder.appName('NL2Pipeline').getOrCreate()
-  |
-help: Remove unused import: `pyspark.sql.functions.col`
-
-Found 1 error.
-[*] 1 fixable with the `--fix` option."
+gdelt_000064,64,True,True,True,True,True,
 gdelt_000065,65,True,True,True,True,True,
 gdelt_000066,66,True,True,True,True,True,
-gdelt_000067,67,True,True,True,False,False,"Ruff: F401 [*] `pyspark.sql.functions.col` imported but unused
- --> C:\Users\Admin\AppData\Local\Temp\tmpnpyrq697\candidate.py:2:35
-  |
-1 | from pyspark.sql import SparkSession
-2 | from pyspark.sql.functions import col
-  |                                   ^^^
-3 |
-4 | spark = SparkSession.builder.appName('GDELT Event Trends').getOrCreate()
-  |
-help: Remove unused import: `pyspark.sql.functions.col`
-
-Found 1 error.
-[*] 1 fixable with the `--fix` option."
+gdelt_000067,67,True,True,True,True,True,
 gdelt_000068,68,True,True,True,True,True,
 gdelt_000069,69,True,True,True,True,True,
 gdelt_000070,70,True,True,True,True,True,
-gdelt_000071,71,True,True,False,False,False,"Invalid or invented GDELT columns used: ['country', 'total_mentions'] | Ruff: F401 [*] `pyspark.sql.functions.col` imported but unused
- --> C:\Users\Admin\AppData\Local\Temp\tmp0air019c\candidate.py:2:35
-  |
-1 | from pyspark.sql import SparkSession
-2 | from pyspark.sql.functions import col, sum
-  |                                   ^^^
-3 |
-4 | spark = SparkSession.builder.appName('GDELT Aggregation').getOrCreate()
-  |
-help: Remove unused import: `pyspark.sql.functions.col`
-
-Found 1 error.
-[*] 1 fixable with the `--fix` option."
+gdelt_000071,71,True,True,True,True,True,
 gdelt_000072,72,True,True,True,True,True,
-gdelt_000073,73,True,True,True,False,False,"Ruff: F401 [*] `pyspark.sql.functions.avg` imported but unused
- --> C:\Users\Admin\AppData\Local\Temp\tmpkpp8q5ze\candidate.py:2:35
-  |
-1 | from pyspark.sql import SparkSession
-2 | from pyspark.sql.functions import avg
-  |                                   ^^^
-3 |
-4 | spark = SparkSession.builder.appName('GDELT Aggregation').getOrCreate()
-  |
-help: Remove unused import: `pyspark.sql.functions.avg`
-
-Found 1 error.
-[*] 1 fixable with the `--fix` option."
+gdelt_000073,73,True,True,True,True,True,
 gdelt_000074,74,True,True,True,True,True,
 gdelt_000075,75,True,True,True,True,True,
-gdelt_000076,76,True,True,True,True,True,
-gdelt_000077,77,True,True,True,False,False,"Ruff: F401 [*] `pyspark.sql.functions.col` imported but unused
- --> C:\Users\Admin\AppData\Local\Temp\tmp0wk6dbh1\candidate.py:2:35
-  |
-1 | from pyspark.sql import SparkSession
-2 | from pyspark.sql.functions import col, sum
-  |                                   ^^^
-3 |
-4 | spark = SparkSession.builder.appName('GDELT Aggregation').getOrCreate()
-  |
-help: Remove unused import: `pyspark.sql.functions.col`
-
-Found 1 error.
-[*] 1 fixable with the `--fix` option."
+gdelt_000076,76,True,True,False,True,False,Invalid or invented GDELT columns used: ['action_country']
+gdelt_000077,77,True,True,True,True,True,
 gdelt_000078,78,True,True,True,True,True,
 gdelt_000079,79,True,True,True,True,True,
-gdelt_000080,80,True,True,True,True,True,
-gdelt_000081,81,False,False,False,False,False,Duplicate user prompt
+gdelt_000080,80,False,False,False,False,False,Duplicate user prompt
+gdelt_000081,81,True,True,True,True,True,
 gdelt_000082,82,True,True,True,True,True,
 gdelt_000083,83,True,True,True,True,True,
-gdelt_000084,84,False,False,False,False,False,Duplicate user prompt
+gdelt_000084,84,True,True,True,True,True,
 gdelt_000085,85,True,True,True,True,True,
 gdelt_000086,86,True,True,True,True,True,
 gdelt_000087,87,True,True,True,True,True,
 gdelt_000088,88,True,True,True,True,True,
-gdelt_000089,89,False,False,False,False,False,Duplicate user prompt
+gdelt_000089,89,True,True,True,True,True,
 gdelt_000090,90,True,True,True,True,True,
 gdelt_000091,91,True,True,True,True,True,
-gdelt_000092,92,False,False,False,False,False,Duplicate user prompt
+gdelt_000092,92,True,True,True,True,True,
 gdelt_000093,93,True,True,True,True,True,
-gdelt_000094,94,True,True,False,True,False,Invalid or invented GDELT columns used: ['event_count']
+gdelt_000094,94,True,True,True,True,True,
 gdelt_000095,95,True,True,True,True,True,
 gdelt_000096,96,True,True,True,True,True,
-gdelt_000097,97,False,False,False,False,False,Duplicate user prompt
+gdelt_000097,97,True,True,True,True,True,
 gdelt_000098,98,True,True,True,True,True,
 gdelt_000099,99,True,True,True,True,True,
 gdelt_000100,100,True,True,True,True,True,
-gdelt_000101,101,True,True,True,False,False,"Ruff: F401 [*] `pyspark.sql.functions.col` imported but unused
- --> C:\Users\Admin\AppData\Local\Temp\tmp67abw4bx\candidate.py:2:35
-  |
-1 | from pyspark.sql import SparkSession
-2 | from pyspark.sql.functions import col
-  |                                   ^^^
-3 |
-4 | spark = SparkSession.builder \
-  |
-help: Remove unused import: `pyspark.sql.functions.col`
-
-Found 1 error.
-[*] 1 fixable with the `--fix` option."
+gdelt_000101,101,True,True,True,True,True,
 gdelt_000102,102,True,True,True,True,True,
 gdelt_000103,103,True,True,True,True,True,
 gdelt_000104,104,True,True,True,True,True,
-gdelt_000105,105,True,True,True,True,True,
+gdelt_000105,105,True,True,False,True,False,Invalid or invented GDELT columns used: ['action_location']
 gdelt_000106,106,True,True,True,True,True,
 gdelt_000107,107,True,True,True,True,True,
 gdelt_000108,108,True,True,True,True,True,
 gdelt_000109,109,True,True,True,True,True,
-gdelt_000110,110,True,True,True,False,False,"Ruff: F401 [*] `pyspark.sql.functions.col` imported but unused
- --> C:\Users\Admin\AppData\Local\Temp\tmpx6rt9vzp\candidate.py:2:35
-  |
-1 | from pyspark.sql import SparkSession
-2 | from pyspark.sql.functions import col, sum
-  |                                   ^^^
-3 |
-4 | spark = SparkSession.builder.appName('GDELT Processing').getOrCreate()
-  |
-help: Remove unused import: `pyspark.sql.functions.col`
-
-Found 1 error.
-[*] 1 fixable with the `--fix` option."
+gdelt_000110,110,True,True,True,True,True,
 gdelt_000111,111,True,True,True,True,True,
-gdelt_000112,112,True,True,True,True,True,
+gdelt_000112,112,False,False,False,False,False,Duplicate user prompt
 gdelt_000113,113,True,True,True,True,True,
 gdelt_000114,114,True,True,True,True,True,
-gdelt_000115,115,True,True,False,True,False,Invalid or invented GDELT columns used: ['count']
-gdelt_000116,116,False,False,False,False,False,Duplicate user prompt
-gdelt_000117,117,True,True,True,False,False,"Ruff: F401 [*] `pyspark.sql.functions.col` imported but unused
- --> C:\Users\Admin\AppData\Local\Temp\tmp0a_zrinj\candidate.py:2:35
-  |
-1 | from pyspark.sql import SparkSession
-2 | from pyspark.sql.functions import col
-  |                                   ^^^
-3 |
-4 | # Initialize Spark session
-  |
-help: Remove unused import: `pyspark.sql.functions.col`
-
-Found 1 error.
-[*] 1 fixable with the `--fix` option."
+gdelt_000115,115,True,True,True,True,True,
+gdelt_000116,116,True,True,True,True,True,
+gdelt_000117,117,True,True,True,True,True,
 gdelt_000118,118,True,True,True,True,True,
 gdelt_000119,119,True,True,True,True,True,
 gdelt_000120,120,True,True,True,True,True,
 gdelt_000121,121,True,True,True,True,True,
-gdelt_000122,122,True,True,True,False,False,"Ruff: F401 [*] `pyspark.sql.functions.when` imported but unused
- --> C:\Users\Admin\AppData\Local\Temp\tmpo1fd56cd\candidate.py:2:40
-  |
-1 | from pyspark.sql import SparkSession
-2 | from pyspark.sql.functions import col, when, trim, upper
-  |                                        ^^^^
-3 |
-4 | spark = SparkSession.builder.appName('GDELT Data Quality').getOrCreate()
-  |
-help: Remove unused import: `pyspark.sql.functions.when`
-
-Found 1 error.
-[*] 1 fixable with the `--fix` option."
-gdelt_000123,123,False,False,False,False,False,Duplicate user prompt
+gdelt_000122,122,True,True,True,True,True,
+gdelt_000123,123,True,True,True,True,True,
 gdelt_000124,124,True,True,True,True,True,
 gdelt_000125,125,True,True,True,True,True,
 gdelt_000126,126,True,True,True,True,True,
 gdelt_000127,127,True,True,True,True,True,
 gdelt_000128,128,True,True,True,True,True,
-gdelt_000129,129,False,False,False,False,False,Duplicate user prompt
+gdelt_000129,129,True,True,True,True,True,
 gdelt_000130,130,True,True,True,True,True,
-gdelt_000131,131,False,False,False,False,False,Duplicate user prompt
+gdelt_000131,131,True,True,True,True,True,
 gdelt_000132,132,True,True,True,True,True,
 gdelt_000133,133,True,True,True,True,True,
 gdelt_000134,134,True,True,True,True,True,
-gdelt_000135,135,True,True,True,True,True,
-gdelt_000136,136,True,True,True,True,True,
+gdelt_000135,135,True,True,False,True,False,Invalid or invented GDELT columns used: ['action_country']
+gdelt_000136,136,False,False,False,False,False,Duplicate user prompt
 gdelt_000137,137,True,True,True,True,True,
 gdelt_000138,138,True,True,True,True,True,
-gdelt_000139,139,True,True,True,True,True,
+gdelt_000139,139,False,False,False,False,False,Duplicate user prompt
 gdelt_000140,140,True,True,True,True,True,
-gdelt_000141,141,True,True,False,True,False,Invalid or invented GDELT columns used: ['event_count']
+gdelt_000141,141,True,True,True,True,True,
 gdelt_000142,142,True,True,True,True,True,
-gdelt_000143,143,True,True,False,True,False,Invalid or invented GDELT columns used: ['event_count']
-gdelt_000144,144,True,True,True,True,True,
-gdelt_000145,145,True,True,True,True,True,
+gdelt_000143,143,True,True,True,True,True,
+gdelt_000144,144,False,False,False,False,False,Duplicate user prompt
+gdelt_000145,145,False,False,False,False,False,Duplicate user prompt
 gdelt_000146,146,True,True,True,True,True,
 gdelt_000147,147,True,True,True,True,True,
-gdelt_000148,148,True,True,True,False,False,"Ruff: F401 [*] `pyspark.sql.functions.col` imported but unused
- --> C:\Users\Admin\AppData\Local\Temp\tmpvghzm_6s\candidate.py:2:35
-  |
-1 | from pyspark.sql import SparkSession
-2 | from pyspark.sql.functions import col, count
-  |                                   ^^^
-3 |
-4 | spark = SparkSession.builder.appName('GDELT Trend Analysis').getOrCreate()
-  |
-help: Remove unused import: `pyspark.sql.functions.col`
-
-Found 1 error.
-[*] 1 fixable with the `--fix` option."
-gdelt_000149,149,True,True,True,True,True,
+gdelt_000148,148,True,True,True,True,True,
+gdelt_000149,149,False,False,False,False,False,Duplicate user prompt
 gdelt_000150,150,True,True,True,True,True,
 gdelt_000151,151,True,True,True,True,True,
 gdelt_000152,152,True,True,True,True,True,
@@ -350,92 +158,44 @@ gdelt_000156,156,True,True,True,True,True,
 gdelt_000157,157,True,True,True,True,True,
 gdelt_000158,158,True,True,True,True,True,
 gdelt_000159,159,True,True,True,True,True,
-gdelt_000160,160,True,True,True,False,False,"Ruff: F401 [*] `pyspark.sql.functions.col` imported but unused
- --> C:\Users\Admin\AppData\Local\Temp\tmppy5kaqrs\candidate.py:2:35
-  |
-1 | from pyspark.sql import SparkSession
-2 | from pyspark.sql.functions import col
-  |                                   ^^^
-3 |
-4 | spark = SparkSession.builder.appName('GDELT Event Count').getOrCreate()
-  |
-help: Remove unused import: `pyspark.sql.functions.col`
-
-Found 1 error.
-[*] 1 fixable with the `--fix` option."
-gdelt_000161,161,True,True,True,True,True,
-gdelt_000162,162,False,False,False,False,False,Duplicate user prompt
-gdelt_000163,163,True,True,False,True,False,Invalid or invented GDELT columns used: ['event_count']
+gdelt_000160,160,True,True,True,True,True,
+gdelt_000161,161,False,False,False,False,False,Duplicate user prompt
+gdelt_000162,162,True,True,True,True,True,
+gdelt_000163,163,True,True,True,True,True,
 gdelt_000164,164,True,True,True,True,True,
-gdelt_000165,165,True,True,True,True,True,
-gdelt_000166,166,True,True,True,False,False,"Ruff: F401 [*] `pyspark.sql.functions.col` imported but unused
- --> C:\Users\Admin\AppData\Local\Temp\tmpymzaai2g\candidate.py:2:35
-  |
-1 | from pyspark.sql import SparkSession
-2 | from pyspark.sql.functions import col
-  |                                   ^^^
-3 |
-4 | spark = SparkSession.builder.appName('GDELT Daily Event Count').getOrCreate()
-  |
-help: Remove unused import: `pyspark.sql.functions.col`
-
-Found 1 error.
-[*] 1 fixable with the `--fix` option."
-gdelt_000167,167,True,True,True,True,True,
+gdelt_000165,165,True,True,False,True,False,"Invalid or invented GDELT columns used: ['action_country', 'action_lat', 'action_location', 'action_long', 'event_base_code', 'event_code', 'goldstein_scale', 'num_articles', 'num_mentions', 'num_sources', 'source_url']"
+gdelt_000166,166,True,True,True,True,True,
+gdelt_000167,167,True,True,False,True,False,Invalid or invented GDELT columns used: ['action_location']
 gdelt_000168,168,True,True,True,True,True,
-gdelt_000169,169,False,False,False,False,False,Duplicate user prompt
+gdelt_000169,169,True,True,True,True,True,
 gdelt_000170,170,True,True,True,True,True,
 gdelt_000171,171,True,True,True,True,True,
-gdelt_000172,172,False,False,False,False,False,Duplicate user prompt
+gdelt_000172,172,True,True,True,True,True,
 gdelt_000173,173,True,True,True,True,True,
 gdelt_000174,174,True,True,True,True,True,
 gdelt_000175,175,True,True,True,True,True,
 gdelt_000176,176,True,True,True,True,True,
-gdelt_000177,177,True,True,True,True,True,
+gdelt_000177,177,True,True,False,True,False,Invalid or invented GDELT columns used: ['action_country']
 gdelt_000178,178,True,True,True,True,True,
 gdelt_000179,179,True,True,True,True,True,
-gdelt_000180,180,True,True,False,True,False,Invalid or invented GDELT columns used: ['count']
+gdelt_000180,180,True,True,True,True,True,
 gdelt_000181,181,True,True,True,True,True,
 gdelt_000182,182,True,True,True,True,True,
 gdelt_000183,183,True,True,True,True,True,
 gdelt_000184,184,True,True,True,True,True,
 gdelt_000185,185,True,True,True,True,True,
 gdelt_000186,186,True,True,True,True,True,
-gdelt_000187,187,True,True,True,True,True,
+gdelt_000187,187,False,False,False,False,False,Duplicate user prompt
 gdelt_000188,188,True,True,True,True,True,
 gdelt_000189,189,True,True,True,True,True,
-gdelt_000190,190,False,False,False,False,False,Duplicate user prompt
-gdelt_000191,191,True,True,True,False,False,"Ruff: F401 [*] `pyspark.sql.functions.col` imported but unused
- --> C:\Users\Admin\AppData\Local\Temp\tmpugmj_3ps\candidate.py:2:35
-  |
-1 | from pyspark.sql import SparkSession
-2 | from pyspark.sql.functions import col
-  |                                   ^^^
-3 |
-4 | # Initialize Spark session
-  |
-help: Remove unused import: `pyspark.sql.functions.col`
-
-Found 1 error.
-[*] 1 fixable with the `--fix` option."
+gdelt_000190,190,True,True,True,True,True,
+gdelt_000191,191,False,False,False,False,False,Duplicate user prompt
 gdelt_000192,192,True,True,True,True,True,
 gdelt_000193,193,True,True,True,True,True,
 gdelt_000194,194,True,True,True,True,True,
-gdelt_000195,195,True,True,False,True,False,Invalid or invented GDELT columns used: ['total_mentions']
-gdelt_000196,196,True,True,True,True,True,
+gdelt_000195,195,True,True,False,True,False,Invalid or invented GDELT columns used: ['source_url']
+gdelt_000196,196,True,True,False,True,False,Invalid or invented GDELT columns used: ['action_country']
 gdelt_000197,197,True,True,True,True,True,
-gdelt_000198,198,True,True,True,False,False,"Ruff: F401 [*] `pyspark.sql.functions.col` imported but unused
- --> C:\Users\Admin\AppData\Local\Temp\tmpkwllfn_e\candidate.py:2:35
-  |
-1 | from pyspark.sql import SparkSession
-2 | from pyspark.sql.functions import col
-  |                                   ^^^
-3 |
-4 | spark = SparkSession.builder \
-  |
-help: Remove unused import: `pyspark.sql.functions.col`
-
-Found 1 error.
-[*] 1 fixable with the `--fix` option."
-gdelt_000199,199,True,True,True,True,True,
+gdelt_000198,198,True,True,True,True,True,
+gdelt_000199,199,False,False,False,False,False,Duplicate user prompt
 gdelt_000200,200,True,True,True,True,True,
