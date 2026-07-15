@@ -1,18 +1,13 @@
 environment:
   name: nl2pipeline_environment
   version: "0.1.0"
-  description: >
-    Metadata catalogue for the NL2Pipeline streaming environment.
-    This file tells the code-generation model which Kafka topics,
-    Spark settings, GDELT fields, and Cassandra tables are available.
+  description: Metadata catalogue for the NL2Pipeline streaming environment (Kafka topics, Spark settings, GDELT fields, Cassandra tables).
   domain: global_news_events
   timezone: UTC
 
 dataset:
   name: GDELT Events
-  description: >
-    GDELT event records describing global news events, actors, locations,
-    event types, tone, mentions, sources, and article counts.
+  description: GDELT event records describing global news events, actors, locations, event types, tone, mentions, sources, and article counts.
   record_format: json
   primary_event_time_field: ts
   primary_event_id_field: event_id
@@ -25,7 +20,7 @@ services:
       - name: gdelt-events-raw
         display_name: Raw GDELT Events
         type: source
-        description: Raw GDELT event messages produced by the GDELT Kafka producer. Each message is a JSON object matching the GDELT schema.
+        description: Raw GDELT event messages produced by the GDELT Kafka producer. JSON matching the GDELT schema.
         key_field: event_id
         value_format: json
         partitions: 3
@@ -39,7 +34,7 @@ services:
       - name: pipeline-errors-dlq
         display_name: Pipeline Dead Letter Queue
         type: error
-        description: Dead letter queue for failed or malformed messages that could not be processed.
+        description: Dead letter queue for failed or malformed messages.
         key_field: null
         value_format: json
         partitions: 1
@@ -50,13 +45,13 @@ services:
 
   spark:
     app_name: nl2pipeline_job
-    master: spark://spark-master:7077
+    master: spark://spark:7077
     deploy_mode: client
     language: python
     supported_api: pyspark
     packages:
       - org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1
-      - com.datastax.spark:spark-cassandra-connector_2.12:3.5.1
+      - com.datastax.spark:spark-cassandra-connector_2.12:3.4.1
     default_streaming_trigger: processingTime=30 seconds
     checkpoint_base_path: /tmp/spark-checkpoints/nl2pipeline
 
@@ -70,88 +65,69 @@ services:
       replication_factor: 1
 
 gdelt_schema:
-  description: >
-    Fields produced by the GDELT Kafka producer and available in the gdelt-events-raw topic.
-    Use these field names when filtering, selecting, or aggregating from the Kafka stream.
+  description: Fields available in the gdelt-events-raw Kafka topic. Use these exact names when filtering, selecting, or aggregating.
   fields:
     - name: event_id
       type: string
       nullable: false
-      description: Unique GDELT global event identifier (column 0 in raw CSV).
-
+      description: Unique GDELT global event identifier.
     - name: event_date
       type: date
       nullable: false
-      description: Date of the event in YYYY-MM-DD format.
-
+      description: Date of the event (YYYY-MM-DD).
     - name: actor1
       type: string
       nullable: true
-      description: First actor involved in the event (GDELT Actor1Code).
-
+      description: First actor involved in the event.
     - name: actor2
       type: string
       nullable: true
-      description: Second actor involved in the event (GDELT Actor2Code).
-
+      description: Second actor involved in the event.
     - name: event_code
       type: string
       nullable: true
-      description: GDELT CAMEO event code representing the type of event.
-
+      description: GDELT CAMEO event type code.
     - name: country
       type: string
       nullable: true
-      description: Country code associated with the event location (ActionGeo_CountryCode).
-
+      description: Country code of the event location.
     - name: lat
       type: double
       nullable: true
-      description: Latitude of the event location (ActionGeo_Lat).
-
+      description: Latitude of the event location.
     - name: lon
       type: double
       nullable: true
-      description: Longitude of the event location (ActionGeo_Long).
-
+      description: Longitude of the event location.
     - name: tone
       type: double
       nullable: true
-      description: Average emotional tone of related news coverage (AvgTone).
-
+      description: Average emotional tone of related news coverage.
     - name: num_mentions
       type: int
       nullable: true
-      description: Number of mentions of the event (NumMentions).
-
+      description: Number of mentions of the event.
     - name: num_sources
       type: int
       nullable: true
-      description: Number of unique sources reporting the event (NumSources).
-
+      description: Number of unique sources reporting the event.
     - name: num_articles
       type: int
       nullable: true
-      description: Number of articles related to the event (NumArticles).
-
+      description: Number of articles related to the event.
     - name: is_root_event
       type: boolean
       nullable: true
-      description: Whether the event is marked as a root event (IsRootEvent).
-
+      description: Whether the event is marked as a root event.
     - name: ts
       type: timestamp
       nullable: false
-      description: Ingestion timestamp (UTC ISO-8601) added by the producer at ingest time.
+      description: Ingestion timestamp (UTC ISO-8601).
 
 cassandra_tables:
   - name: processed_events
     display_name: Processed Events
-    description: >
-      Generic sink for individual GDELT event records from the Kafka stream.
-      Partitioned by (source_topic, event_date) so queries retrieve all events
-      from a given topic on a given day. The payload column stores the full
-      JSON record as a string.
+    description: Sink for individual GDELT event records, partitioned by (source_topic, event_date).
     table_type: detail
     primary_key:
       partition_key:
@@ -171,16 +147,13 @@ cassandra_tables:
       - append
     example_user_requests:
       - Store individual GDELT events from the stream into Cassandra.
-      - Write filtered events to the processed_events table.
-      - Persist raw events with their ingestion timestamp.
 
   - name: aggregated_results
     display_name: Aggregated Results
     description: >
-      Generic sink for Spark aggregation output. Partitioned by (source_topic, window_start)
-      to avoid hotspotting. group_key stores the aggregation dimension
-      (e.g. "country=IRL", "event_code=14") and metric_name stores the measure
-      (e.g. "avg_tone", "event_count", "total_mentions").
+      Sink for Spark aggregation output, partitioned by (source_topic, window_start).
+      group_key stores the aggregation dimension (e.g. "country=IRL"); metric_name
+      stores the measure (e.g. "avg_tone", "event_count").
     table_type: aggregate
     primary_key:
       partition_key:
@@ -203,15 +176,10 @@ cassandra_tables:
       - upsert
     example_user_requests:
       - Aggregate GDELT events by country and write results to Cassandra.
-      - Compute average tone per event code over a time window.
-      - Store windowed aggregation results from the Kafka stream.
 
   - name: pipeline_runs
     display_name: Pipeline Runs
-    description: >
-      Observability and evaluation log for NL2Pipeline generation attempts.
-      Records every SLM code generation run — used for EX scoring, latency
-      measurement, and model comparison. Not intended as a user-written sink.
+    description: Internal observability log for generation attempts. Not a user-written sink.
     table_type: observability
     primary_key:
       partition_key:
@@ -288,13 +256,5 @@ example_prompts:
     expected_sink_table: processed_events
 
   - prompt: Count GDELT events by country over a 1-hour window and store the result.
-    expected_source_topic: gdelt-events-raw
-    expected_sink_table: aggregated_results
-
-  - prompt: Compute the average tone per event_code every 30 minutes.
-    expected_source_topic: gdelt-events-raw
-    expected_sink_table: aggregated_results
-
-  - prompt: Aggregate total mentions by actor1 over a 1-day window and write to Cassandra.
     expected_source_topic: gdelt-events-raw
     expected_sink_table: aggregated_results

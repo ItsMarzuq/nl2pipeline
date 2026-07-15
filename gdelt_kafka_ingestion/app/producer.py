@@ -8,8 +8,7 @@ from pathlib import Path
 from typing import Iterable
 
 import requests
-from kafka import KafkaProducer
-from kafka.errors import NoBrokersAvailable
+from confluent_kafka import KafkaException, Producer
 
 from app.gdelt_mapper import map_gdelt_row_to_message
 from app.logging_config import setup_logging
@@ -29,28 +28,31 @@ GDELT_LAST_UPDATE_URL = "http://data.gdeltproject.org/gdeltv2/lastupdate.txt"
 logger = logging.getLogger(__name__)
 
 
-def create_kafka_producer() -> KafkaProducer:
+def create_kafka_producer() -> Producer:
     for attempt in range(1, 11):
         try:
-            producer = KafkaProducer(
-                bootstrap_servers=KAFKA_BOOTSTRAP,
-                value_serializer=lambda value: json.dumps(value).encode("utf-8"),
-                key_serializer=lambda value: str(value).encode("utf-8"),
-                retries=5,
-            )
+            producer = Producer({"bootstrap.servers": KAFKA_BOOTSTRAP})
+            # Force a broker round-trip so connection failures surface here,
+            # not on the first publish_message() call.
+            producer.list_topics(timeout=5)
             logger.info("Connected to Kafka at %s", KAFKA_BOOTSTRAP)
             return producer
 
-        except NoBrokersAvailable:
-            logger.warning("Kafka not available yet. Attempt %s/10", attempt)
+        except KafkaException as exc:
+            logger.warning("Kafka not available yet (%s). Attempt %s/10", exc, attempt)
             time.sleep(3)
 
     raise RuntimeError("Could not connect to Kafka")
 
 
-def publish_message(producer: KafkaProducer, message: dict) -> None:
+def publish_message(producer: Producer, message: dict) -> None:
     key = message["event_id"]
-    producer.send(KAFKA_TOPIC, key=key, value=message)
+    producer.produce(
+        KAFKA_TOPIC,
+        key=str(key).encode("utf-8"),
+        value=json.dumps(message).encode("utf-8"),
+    )
+    producer.poll(0)
 
 
 def sleep_for_publish_rate() -> None:
@@ -61,7 +63,7 @@ def sleep_for_publish_rate() -> None:
 
 
 def publish_rows(
-    producer: KafkaProducer,
+    producer: Producer,
     rows: Iterable[list[str]],
     source_name: str,
     published_count_start: int = 0,
@@ -113,7 +115,7 @@ def list_replay_files() -> list[Path]:
     return files
 
 
-def run_replay_mode(producer: KafkaProducer) -> None:
+def run_replay_mode(producer: Producer) -> None:
     files = list_replay_files()
 
     if not files:
@@ -182,7 +184,7 @@ def rows_from_zip_bytes(zip_bytes: bytes) -> Iterable[list[str]]:
             yield from reader
 
 
-def run_live_mode(producer: KafkaProducer) -> None:
+def run_live_mode(producer: Producer) -> None:
     logger.info("Starting live mode")
     logger.info("Polling every %s seconds", LIVE_POLL_SECONDS)
 

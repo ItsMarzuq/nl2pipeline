@@ -54,7 +54,7 @@ The system automatically generates a complete, executable **PySpark Structured S
 
 Before returning the code, the system runs it through a **3-stage validation harness** with **automatic self-correction** — if the generated code fails a stage, the error is fed back to the language model and it retries (up to 3 times).
 
-The language model used is **Microsoft Phi-4-mini-instruct** (3.8B parameters), loaded locally with 4-bit quantization for GPU-efficient inference.
+The language model used is **Qwen3.5-4B**, served locally by **Ollama** (GGUF quantized, running on `llama.cpp` under the hood) rather than loaded in-process via HuggingFace `transformers`.
 
 ---
 
@@ -88,8 +88,8 @@ The language model used is **Microsoft Phi-4-mini-instruct** (3.8B parameters), 
 │  ┌─────────────────────────────────────────────────────────────────┐    │
 │  │                   Backend (port 8000)                            │    │
 │  │                                                                  │    │
-│  │   FastAPI ──▶ GenerationEngine ──▶ Phi-4-mini (4-bit NF4)      │    │
-│  │                      │                                           │    │
+│  │   FastAPI ──▶ GenerationEngine ──HTTP──▶ Ollama (11434)         │    │
+│  │                      │                    Qwen3.5-4B (GGUF)      │    │
 │  │                      ▼                                           │    │
 │  │              Validation Harness                                  │    │
 │  │         [Stage 1: Ruff lint]                                     │    │
@@ -106,6 +106,8 @@ The language model used is **Microsoft Phi-4-mini-instruct** (3.8B parameters), 
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
+**Note:** `ollama` is a separate container (own GPU reservation + model volume) — the backend talks to it over HTTP, it does not load the model in-process.
+
 **Communication pattern:** The backend streams events back to the client using **Server-Sent Events (SSE)** — you get real-time progress updates (lint passed, spark running, done) rather than waiting for a single response.
 
 ---
@@ -119,15 +121,18 @@ nl2pipeline/
 │   ├── app.py                      # FastAPI app, endpoint definitions
 │   ├── config.py                   # Pydantic settings (reads from .env)
 │   ├── metadata.yaml               # Source-of-truth: Kafka topics, Cassandra schema
-│   ├── Dockerfile                  # PyTorch + CUDA 12.6, Python 3.11
+│   ├── Dockerfile                  # python:3.11-slim (no CUDA/torch — Ollama owns that)
 │   ├── requirements.txt
+│   ├── cassandra_client.py         # Shared Cassandra session, non-fatal if unreachable
 │   ├── inference/
 │   │   ├── engine.py               # Self-correction loop, SSE event generator
-│   │   ├── model_loader.py         # Load Phi-4-mini + optional LoRA adapter
+│   │   ├── model_loader.py         # ChatOllama client (talks to the `ollama` service)
 │   │   ├── prompt_builder.py       # System prompt + message assembly
 │   │   └── code_parser.py          # Extract ```python block from LLM output
-│   └── validation/
-│       └── harness.py              # 3-stage validation pipeline
+│   ├── validation/
+│   │   ├── harness.py              # 3-stage validation pipeline
+│   │   └── run_log.py              # Logs each generation run to pipeline_runs
+│   └── tests/                      # Unit tests (code_parser, engine, harness)
 │
 ├── gdelt_kafka_ingestion/          # GDELT event producer service
 │   ├── app/
@@ -157,10 +162,7 @@ nl2pipeline/
 │   ├── e2e_test.py                 # Produces events → Spark aggregation → Cassandra verify
 │   └── Dockerfile
 │
-├── models/                         # Model weights (bind-mounted from host, gitignored)
-│   └── phi4-mini/                  # ~8 GB Phi-4-mini-instruct safetensors
-│
-├── docker-compose.yaml             # Full 9-service stack orchestration
+├── docker-compose.yaml             # Full 11-service stack orchestration
 ├── .env.example                    # Template for environment variables
 └── .env                            # Your local config (gitignored)
 ```
@@ -330,12 +332,21 @@ async def lifespan(app):
     metadata = load_yaml("backend/metadata.yaml")
     app.state.metadata = metadata
 
-    tokenizer, llm = load_llm(settings.BASE_MODEL_ID, settings.ADAPTER_PATH)
-    # (takes ~45 seconds for model loading + quantization)
+    llm = load_llm(settings.OLLAMA_BASE_URL, settings.OLLAMA_MODEL,
+                   settings.MAX_NEW_TOKENS, settings.OLLAMA_NUM_CTX)
+    # Just wires up a ChatOllama HTTP client — the model itself is already
+    # loaded and warm on the `ollama` service (pulled once by `ollama-pull`).
 
-    app.state.engine = GenerationEngine(tokenizer, llm, metadata)
+    cassandra_session = connect_cassandra(settings.CASSANDRA_HOST, ...)
+    # Non-fatal — returns None if Cassandra is unreachable or the driver
+    # isn't installed (see backend/cassandra_client.py).
+
+    app.state.engine = GenerationEngine(llm, metadata, settings.MAX_ATTEMPTS,
+                                         cassandra_session=cassandra_session)
     yield
-    # On shutdown: nothing special needed
+    # On shutdown: close the Cassandra session if one was opened
+    if cassandra_session is not None:
+        cassandra_session.cluster.shutdown()
 ```
 
 ### 6.2 Configuration (`backend/config.py` + `.env`)
@@ -344,12 +355,21 @@ Uses **Pydantic Settings** — reads from environment variables (which come from
 
 ```python
 class Settings(BaseSettings):
-    BASE_MODEL_ID: str = "/model"         # Path or HF hub ID
-    ADAPTER_PATH: str = ""                # Optional LoRA adapter path
+    OLLAMA_BASE_URL: str = "http://ollama:11434"  # Ollama server address
+    OLLAMA_MODEL: str = "qwen3.5:4b"               # Model tag to run
     ENV_YAML_PATH: str = "backend/metadata.yaml"
     MAX_NEW_TOKENS: int = 1024            # Token budget per LLM call
+    OLLAMA_NUM_CTX: int = 6144            # Context window (tokens) to load the model with
     MAX_ATTEMPTS: int = 3                 # Self-correction retry limit
     MOCK_LLM: bool = False               # Skip model load (for CI/testing)
+
+    # Cassandra connection, shared by the Stage 3 harness check and the
+    # pipeline_runs observability log (see backend/cassandra_client.py)
+    CASSANDRA_HOST: str = "cassandra"
+    CASSANDRA_PORT: int = 9042
+    CASSANDRA_USERNAME: str = ""
+    CASSANDRA_PASSWORD: str = ""
+    CASSANDRA_KEYSPACE: str = "nl2pipeline"
 ```
 
 When `MOCK_LLM=true`, the LLM is bypassed and a pre-written PySpark script is returned. This lets you test the validation harness and API without needing a GPU.
@@ -387,17 +407,16 @@ cassandra_tables:       # The tables the model is allowed to write to
 
 ### 6.4 Model Loading (`backend/inference/model_loader.py`)
 
-**Function:** `load_llm(base_model_id, adapter_path, max_new_tokens) → (tokenizer, pipeline)`
+**Function:** `load_llm(base_url, model, max_new_tokens) → ChatOllama`
 
-- **Base model:** Microsoft Phi-4-mini-instruct (3.8B parameters)
-- **Quantization:** 4-bit NF4 via `bitsandbytes` library
-  - Reduces VRAM from ~8 GB to ~2 GB
-  - Negligible quality loss for code generation
-- **LoRA:** If `adapter_path` is set, loads a fine-tuned PEFT adapter on top
-- **Device:** Uses CUDA GPU if available; falls back to CPU (very slow)
-- **Pipeline:** HuggingFace `text-generation` pipeline with greedy decoding (temperature=0, no randomness — deterministic output)
+The backend doesn't load model weights itself — the `ollama` container does that. `load_llm` just builds a `langchain_ollama.ChatOllama` HTTP client pointed at `OLLAMA_BASE_URL`, configured with `num_predict=max_new_tokens` and `temperature=0` (greedy, deterministic decoding).
 
-Loading takes approximately **45 seconds** on first start.
+- **Base model:** Qwen3.5-4B
+- **Quantization / serving:** GGUF, served by Ollama (`llama.cpp` backend) — the `ollama-pull` init service pulls the `OLLAMA_MODEL` tag into a Docker volume once; the `ollama` service loads and caches it in memory, GPU-accelerated via its own CUDA reservation
+- **Fine-tuning:** trained separately with `transformers` + `peft` (LoRA), then merged, converted to GGUF, and registered with `ollama create` as a new tag — `OLLAMA_MODEL` is swapped to that tag rather than a runtime `adapter_path`
+- **Device:** the `ollama` service uses CUDA if the GPU reservation is available; falls back to CPU otherwise (slow)
+
+Because the model is a separately-running, always-warm server, the *backend* has near-zero startup cost — connecting is just constructing an HTTP client. The one-time cost is Ollama loading the model into memory the first time it's called, and the one-time `ollama pull` download (~3.4 GB for `qwen3.5:4b`) on first stack start.
 
 ### 6.5 Prompt Builder (`backend/inference/prompt_builder.py`)
 
@@ -429,7 +448,7 @@ messages = [
 ]
 ```
 
-The messages are then formatted with Phi-4's chat template (`apply_chat_template`) to produce the final string fed to the model.
+Unlike the previous HuggingFace `transformers` setup, there's no manual chat-template formatting step — `to_langchain_messages()` converts each `{"role", "content"}` dict into a LangChain `SystemMessage`/`HumanMessage`/`AIMessage`, and Ollama applies the model's chat template server-side when it receives the messages.
 
 ### 6.6 Generation Engine (`backend/inference/engine.py`)
 
@@ -444,8 +463,8 @@ This is an **async generator** that yields event dictionaries. The FastAPI endpo
 for attempt in range(1, MAX_ATTEMPTS + 1):
 
     1. Build messages list (prompt builder)
-    2. Format with Phi-4 chat template
-    3. Invoke LLM → raw_output string
+    2. Convert to LangChain message objects (to_langchain_messages)
+    3. Invoke ChatOllama → AIMessage.content as raw_output string
        → yield {"event": "inference_complete", "attempt": attempt, "code": ...}
 
     4. Parse code block from raw_output
@@ -557,7 +576,7 @@ If the Cassandra cluster is unreachable or the `cassandra-driver` package isn't 
 
 ### 7.1 Services Overview
 
-All 9 services are defined in `docker-compose.yaml` and communicate over a shared bridge network `nl2pipeline-net`.
+11 services are defined in `docker-compose.yaml` (plus a few profile-gated extras) and communicate over a shared bridge network `nl2pipeline-net`.
 
 | Service | Image | Ports | Role |
 |---------|-------|-------|------|
@@ -569,14 +588,16 @@ All 9 services are defined in `docker-compose.yaml` and communicate over a share
 | `kafka-init` | Custom | — | One-shot: creates Kafka topics |
 | `cassandra-init` | Custom | — | One-shot: creates keyspace + tables |
 | `gdelt-producer` | Custom | — | Continuous: publishes GDELT events |
-| `backend` | Custom (PyTorch) | 8000 | FastAPI + Phi-4 inference |
+| `ollama` | ollama/ollama:latest | 11434 (internal) | Serves Qwen3.5-4B (GGUF), owns the GPU reservation |
+| `ollama-pull` | ollama/ollama:latest | — | One-shot: `ollama pull ${OLLAMA_MODEL}` |
+| `backend` | Custom (python:3.11-slim) | 8000 | FastAPI + GenerationEngine (calls Ollama over HTTP) |
 | `e2e-test` | Custom (Spark) | — | Profile `test`: integration test |
 
 ### 7.2 Backend Dockerfile
 
 ```dockerfile
-# Base: PyTorch with CUDA 12.6 support
-FROM pytorch/pytorch:2.12.0-cuda12.6-cudnn9-runtime
+# Base: plain Python — no CUDA/torch needed, the backend only speaks HTTP to Ollama
+FROM python:3.11-slim
 
 # System dependencies
 RUN apt-get install -y gcc g++ python3-venv openjdk-17-jre-headless
@@ -592,7 +613,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 # Key packages:
-#   transformers, peft, bitsandbytes, accelerate  (LLM inference)
+#   langchain-core, langchain-ollama              (LLM client — model itself is served by `ollama`)
 #   fastapi, uvicorn                               (API server)
 #   ruff                                           (lint validation)
 #   pyspark==3.5.1                                 (Spark validation)
@@ -610,9 +631,12 @@ EXPOSE 8000
 CMD ["uvicorn", "backend.app:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
-**GPU configuration in docker-compose.yaml:**
+**GPU configuration in docker-compose.yaml:** the GPU reservation now lives on the `ollama` service, not `backend` — the backend container never touches CUDA:
 ```yaml
-backend:
+ollama:
+  image: ollama/ollama:latest
+  volumes:
+    - ollama-data:/root/.ollama          # Pulled models, cached across restarts
   deploy:
     resources:
       reservations:
@@ -620,24 +644,36 @@ backend:
           - driver: nvidia
             count: 1
             capabilities: [gpu]
-  volumes:
-    - ./models/phi4-mini:/model          # Model weights from host filesystem
-    - /var/run/docker.sock:/var/run/docker.sock  # Docker socket for spark-submit
+
+ollama-pull:
+  image: ollama/ollama:latest
+  depends_on:
+    ollama:
+      condition: service_healthy
+  command: ["pull", "${OLLAMA_MODEL:-qwen3.5:4b}"]
+
+backend:
+  depends_on:
+    ollama-pull:
+      condition: service_completed_successfully
+  environment:
+    - OLLAMA_BASE_URL=http://ollama:11434
+    - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen3.5:4b}
 ```
 
-The Docker socket mount allows the backend to run `spark-submit` as a subprocess, which launches a temporary container or local Spark session for code validation.
+**No Docker socket mount.** `spark-submit` in the validation harness runs as a plain subprocess *inside* the `backend` container itself (`local[*]` mode, against the container's own bundled Spark install) — it does not spin up sibling containers, so `backend` never needs `/var/run/docker.sock`.
 
 ### 7.3 Other Dockerfiles
 
 **`startup_scripts/Dockerfile`:**
 - Base: `python:3.11-slim`
-- Installs `kafka-python` + `cassandra-driver`
+- Installs `confluent-kafka` + `cassandra-driver`
 - Runs `init_kafka_topics.py` or `init_cassandra.py` depending on entry point
 - Exits with code 0 on success (Docker marks as `completed_successfully`)
 
 **`gdelt_kafka_ingestion/Dockerfile`:**
 - Base: `python:3.11-slim`
-- Installs `kafka-python`, `requests`
+- Installs `confluent-kafka`, `requests`
 - Runs `producer.py` (long-running process)
 
 **`dev/e2e_test/Dockerfile`:**
@@ -656,16 +692,20 @@ Step 2:  kafka starts, waits for zookeeper healthcheck
            ↓
 Step 3:  kafka-init runs (creates topics), exits 0
 cassandra starts (takes ~60 seconds to be ready)
+ollama starts, waits for healthcheck (`ollama list`)
            ↓
 Step 4:  cassandra-init runs (creates keyspace + tables), exits 0
+ollama-pull runs (`ollama pull ${OLLAMA_MODEL}`), exits 0
+  — only downloads on first run; cached in the ollama-data volume after that
            ↓
 Step 5:  gdelt-producer starts (waits for kafka healthy + kafka-init completed)
-Step 6:  backend starts (waits for cassandra-init completed + cassandra healthy)
+Step 6:  backend starts (waits for cassandra-init completed + kafka-init completed
+         + ollama-pull completed)
 
 Parallel: spark + spark-worker start independently
 ```
 
-**Important:** Cassandra takes about 60 seconds to reach "healthy" state. The total stack startup is typically **3–5 minutes**.
+**Important:** Cassandra takes about 60 seconds to reach "healthy" state, and the first `ollama-pull` run downloads the model (~3.4 GB, one-time). The total stack startup is typically **3–5 minutes** on a warm cache, longer on the very first run.
 
 ---
 
@@ -677,7 +717,7 @@ The `dataset_generation/` folder contains offline tooling for creating training 
 - Uses the OpenAI API to generate synthetic (natural language prompt, PySpark code) pairs
 - Each pair follows the same schema defined in `gdelt_environment.yaml`
 - Output: `gdelt_pairs.jsonl` — one JSON object per line, format: `{"prompt": "...", "code": "..."}`
-- This dataset can be used to fine-tune Phi-4-mini-instruct with LoRA (not implemented in this repo, but the dataset is the input)
+- This dataset can be used to fine-tune Qwen3.5-4B with LoRA/PEFT (not implemented in this repo, but the dataset is the input) — the resulting adapter would then be merged, converted to GGUF, and registered with Ollama (see the Fine-Tuning section in `README.md`)
 
 **`validate_gdelt_pairs.py`:**
 - Reads `gdelt_pairs.jsonl`
@@ -727,11 +767,13 @@ Here is exactly what happens when a user calls `POST /generate`:
       - System prompt (8 rules + worked examples)
       - User message: env YAML + user prompt
 
-   b. Tokenizer applies Phi-4 chat template
-      → formatted_prompt (string, typically 2000-4000 tokens)
+   b. to_langchain_messages() converts the {"role","content"} dicts to
+      SystemMessage/HumanMessage/AIMessage objects
+      → lc_messages (typically 2000-4000 tokens once templated by Ollama)
 
-   c. LLM generates up to 1024 new tokens
-      → raw_output = "<|assistant|>\n```python\nfrom pyspark.sql import..."
+   c. ChatOllama.invoke(lc_messages) — Ollama applies Qwen3.5's chat
+      template server-side and generates up to 1024 new tokens
+      → response.content = "```python\nfrom pyspark.sql import..."
 
    d. CodeParser extracts the ```python block
       → code = "from pyspark.sql import SparkSession\n..."
@@ -791,9 +833,13 @@ All configuration is via environment variables, loaded from `.env` by Docker Com
 
 | Variable | Default | Service | Description |
 |----------|---------|---------|-------------|
-| `BASE_MODEL_ID` | `/model` | backend | HF hub ID or path to model dir |
-| `ADAPTER_PATH` | `""` | backend | Path to LoRA adapter (leave empty if none) |
+| `OLLAMA_BASE_URL` | `http://ollama:11434` | backend | Ollama server address |
+| `OLLAMA_MODEL` | `qwen3.5:4b` | backend, ollama-pull | Model tag to pull and serve |
 | `MAX_NEW_TOKENS` | `1024` | backend | Token budget per LLM call |
+| `OLLAMA_NUM_CTX` | `6144` | backend | Context window (tokens) the model is loaded with |
+| `OLLAMA_FLASH_ATTENTION` | `1` | ollama | Enables flash attention (VRAM efficiency) |
+| `OLLAMA_KV_CACHE_TYPE` | `q8_0` | ollama | KV cache quantization |
+| `OLLAMA_KEEP_ALIVE` | `30m` | ollama | How long to keep the model warm in memory after last use |
 | `MAX_ATTEMPTS` | `3` | backend | Self-correction retry limit |
 | `MOCK_LLM` | `false` | backend | Skip model load (for testing) |
 | `KAFKA_BROKER_ID` | `1` | kafka | Kafka broker ID |
@@ -801,6 +847,7 @@ All configuration is via environment variables, loaded from `.env` by Docker Com
 | `KAFKA_EXTERNAL_PORT` | `29092` | kafka | Host-exposed Kafka port |
 | `CASSANDRA_CLUSTER_NAME` | `nl2pipeline` | cassandra | Cluster display name |
 | `CASSANDRA_PORT` | `9042` | cassandra | CQL port |
+| `CASSANDRA_KEYSPACE` | `nl2pipeline` | backend | Keyspace used for the schema check + pipeline_runs log |
 | `SPARK_MASTER_PORT` | `7077` | spark | Spark cluster port |
 | `SPARK_MASTER_WEBUI_PORT` | `8081` | spark | Master web UI port |
 | `SPARK_WORKER_WEBUI_PORT` | `8082` | spark-worker | Worker web UI port |
@@ -810,7 +857,6 @@ All configuration is via environment variables, loaded from `.env` by Docker Com
 | `PUBLISH_RATE` | `10` | gdelt-producer | Events per second (replay mode) |
 | `REPLAY_LOOP` | `true` | gdelt-producer | Loop replay forever |
 | `LIVE_POLL_SECONDS` | `900` | gdelt-producer | Polling interval (live mode) |
-| `HF_TOKEN` | `""` | backend | HuggingFace access token |
 | `BACKEND_PORT` | `8000` | backend | API server port |
 
 ---
@@ -820,9 +866,10 @@ All configuration is via environment variables, loaded from `.env` by Docker Com
 | Layer | Technology | Version | Purpose |
 |-------|-----------|---------|---------|
 | API framework | FastAPI + Uvicorn | 0.111+ | REST API, SSE streaming |
-| Language model | Phi-4-mini-instruct | 3.8B params | PySpark code generation |
-| Quantization | bitsandbytes (4-bit NF4) | 0.43+ | GPU memory efficiency |
-| Fine-tuning | PEFT / LoRA | 0.10+ | Optional adapter support |
+| Language model | Qwen3.5-4B | 4B params | PySpark code generation |
+| Model serving | Ollama (llama.cpp, GGUF) | latest | Separate container, HTTP API on 11434 |
+| LLM client | langchain-ollama / langchain-core | 0.1+ / 0.2+ | `ChatOllama` client used by the backend |
+| Fine-tuning | PEFT / LoRA, offline | 0.10+ | Merge → GGUF convert → `ollama create` to serve |
 | Stream processing | Apache Spark | 3.5.1 | Generated pipeline execution + validation |
 | Message broker | Apache Kafka | 7.5.0 (Confluent) | Real-time event streaming |
 | Coordination | Apache Zookeeper | 7.5.0 | Kafka cluster coordination |
@@ -831,66 +878,61 @@ All configuration is via environment variables, loaded from `.env` by Docker Com
 | Containerization | Docker + Compose | — | Service orchestration |
 | Language | Python | 3.11 | All application code |
 | JVM | OpenJDK | 17 | Spark, Kafka, Cassandra |
-| GPU runtime | NVIDIA CUDA | 12.6 | Phi-4 inference acceleration |
+| GPU runtime | NVIDIA CUDA | 12.6 | Used by the `ollama` container for inference |
 
 ---
 
 ## 13. Deployment Requirements
 
 **Hardware:**
-- NVIDIA GPU with ≥ 4 GB VRAM (tested on RTX 3050)
+- NVIDIA GPU with ≥ 4 GB VRAM (tested on RTX 3050) — used by the `ollama` container
 - ≥ 16 GB RAM (Cassandra + Spark are memory-hungry)
-- ≥ 20 GB disk (model weights ~8 GB, Docker images ~7 GB)
+- ≥ 15 GB disk (model weights ~3.4 GB via the Ollama volume, Docker images ~7 GB)
 
 **Software:**
 - Docker Desktop (or Docker Engine + Compose plugin)
-- NVIDIA Container Toolkit (for GPU passthrough)
-- HuggingFace account + access token
+- NVIDIA Container Toolkit (for GPU passthrough to the `ollama` container)
 
 ---
 
 ## 14. Quick Start
 
 ```bash
-# 1. Download model weights from HuggingFace (~8 GB)
-pip install huggingface_hub
-huggingface-cli login
-huggingface-cli download microsoft/Phi-4-mini-instruct --local-dir ./models/phi4-mini
-
-# 2. Configure environment
+# 1. Configure environment
 cp .env.example .env
-# Edit .env if needed (defaults work for local dev)
+# Edit .env if needed — OLLAMA_MODEL defaults to qwen3.5:4b
 
-# 3. Start the full stack (takes 3-5 minutes first time)
+# 2. Start the full stack (takes 3-5 minutes first time; the ollama-pull
+#    service downloads the model, ~3.4 GB, on first run only)
 docker compose up -d
 
-# 4. Monitor startup progress
-docker compose logs -f backend
+# 3. Monitor startup progress
+docker compose logs -f ollama-pull backend
 
-# 5. Check the backend is ready
+# 4. Check the backend is ready
 curl http://localhost:8000/health
 # → {"status": "ok"}
 
-# 6. Inspect the active schema
+# 5. Inspect the active schema
 curl http://localhost:8000/environments
 
-# 7. Generate a pipeline
+# 6. Generate a pipeline
 curl -X POST http://localhost:8000/generate \
   -H "Content-Type: application/json" \
   -N \
   -d '{"prompt": "Read GDELT events and write raw events to the processed_events table", "environment_override": null}'
 # (use -N for SSE streaming output)
 
-# 8. Run the integration test (optional)
+# 7. Run the integration test (optional)
 docker compose --profile test run --rm e2e-test
 
-# 9. Useful web UIs (once running)
+# 8. Useful web UIs (once running)
 # Spark Master UI:  http://localhost:8081
 # Spark Worker UI:  http://localhost:8082
 
-# 10. Stop everything
+# 9. Stop everything
 docker compose down
 
-# 11. Stop and remove volumes (full reset)
+# 10. Stop and remove volumes (full reset, re-downloads the model next start)
 docker compose down -v
 ```

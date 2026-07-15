@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "test-client",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "5501", "--directory", "dev"],
+      "openPath": "/test_client.html",
+      "port": 5501
+    }
+  ]
+}

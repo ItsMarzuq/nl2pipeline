@@ -1,247 +1,1480 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>NL2Pipeline — test client</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NL2Pipeline Workspace</title>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, sans-serif; background: #f5f5f5; color: #111; padding: 2rem; max-width: 860px; margin: auto; }
-    @media (prefers-color-scheme: dark) { body { background: #1a1a1a; color: #eee; } }
-
-    h1 { font-size: 18px; font-weight: 500; margin-bottom: 1.5rem; color: #555; }
-    @media (prefers-color-scheme: dark) { h1 { color: #aaa; } }
-
-    .card { background: #fff; border: 0.5px solid #ddd; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
-    @media (prefers-color-scheme: dark) { .card { background: #222; border-color: #333; } }
-
-    label { font-size: 13px; color: #666; display: block; margin-bottom: 6px; }
-    @media (prefers-color-scheme: dark) { label { color: #aaa; } }
-
-    textarea {
-      width: 100%; min-height: 90px; resize: vertical;
-      font-family: inherit; font-size: 14px; padding: 10px 12px;
-      border-radius: 8px; border: 0.5px solid #ccc;
-      background: #fafafa; color: inherit; line-height: 1.5;
+    :root {
+      --bg: #f7f8fb;
+      --surface: #ffffff;
+      --surface-2: #f0f3f7;
+      --line: #d9e0e7;
+      --line-strong: #bac7d4;
+      --text: #16202a;
+      --muted: #687789;
+      --accent: #0f766e;
+      --accent-2: #1d4ed8;
+      --danger: #b42318;
+      --warning: #b54708;
+      --success: #047857;
+      --code-bg: #111827;
+      --code-text: #e5e7eb;
+      --shadow: 0 14px 38px rgba(22, 32, 42, 0.08);
     }
-    @media (prefers-color-scheme: dark) { textarea { background: #2a2a2a; border-color: #444; } }
-    textarea:focus { outline: none; border-color: #888; }
 
-    .row { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
-
-    input.url {
-      flex: 1; font-size: 13px; padding: 8px 10px;
-      border-radius: 8px; border: 0.5px solid #ccc;
-      background: #fafafa; color: #555; font-family: monospace;
+    * {
+      box-sizing: border-box;
     }
-    @media (prefers-color-scheme: dark) { input.url { background: #2a2a2a; border-color: #444; color: #aaa; } }
-    input.url:focus { outline: none; border-color: #888; color: inherit; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
 
     button {
-      padding: 8px 18px; font-size: 14px; border-radius: 8px;
-      border: 0.5px solid #ccc; background: transparent; color: inherit;
-      cursor: pointer; white-space: nowrap;
-    }
-    button:hover { background: rgba(0,0,0,0.05); }
-    @media (prefers-color-scheme: dark) { button:hover { background: rgba(255,255,255,0.07); } }
-    button:active { transform: scale(0.98); }
-    button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-
-    .status-bar { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #888; min-height: 20px; }
-    .dot { width: 7px; height: 7px; border-radius: 50%; background: #ccc; }
-    .dot.connecting { background: #EF9F27; animation: pulse 1s infinite; }
-    .dot.streaming  { background: #1D9E75; animation: pulse 0.6s infinite; }
-    .dot.done       { background: #639922; }
-    .dot.error      { background: #E24B4A; }
-    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
-
-    #events-list { margin-top: 12px; }
-    .empty { text-align: center; padding: 2rem; color: #aaa; font-size: 13px; }
-
-    .event-row { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 0.5px solid #eee; font-size: 13px; }
-    @media (prefers-color-scheme: dark) { .event-row { border-color: #333; } }
-    .event-row:last-child { border-bottom: none; }
-
-    .badge { font-size: 11px; padding: 2px 8px; border-radius: 6px; font-weight: 500; white-space: nowrap; min-width: 130px; text-align: center; }
-    .badge-meta  { background: #EEEDFE; color: #3C3489; }
-    .badge-infer { background: #E1F5EE; color: #085041; }
-    .badge-done  { background: #EAF3DE; color: #27500A; }
-    .badge-error { background: #FCEBEB; color: #791F1F; }
-    .badge-info  { background: #f0f0f0; color: #555; }
-    @media (prefers-color-scheme: dark) {
-      .badge-meta  { background: #26215C; color: #CECBF6; }
-      .badge-infer { background: #04342C; color: #9FE1CB; }
-      .badge-done  { background: #173404; color: #C0DD97; }
-      .badge-error { background: #501313; color: #F7C1C1; }
-      .badge-info  { background: #333; color: #aaa; }
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      border-radius: 7px;
+      min-height: 36px;
+      padding: 0 12px;
     }
 
-    .event-data { color: #555; word-break: break-all; flex: 1; line-height: 1.5; }
-    @media (prefers-color-scheme: dark) { .event-data { color: #bbb; } }
-
-    pre.code-out {
-      font-family: monospace; font-size: 12px;
-      background: #f8f8f8; border: 0.5px solid #e0e0e0;
-      border-radius: 8px; padding: 12px; overflow-x: auto;
-      white-space: pre; margin-top: 4px; line-height: 1.6; color: #111;
+    button:hover {
+      border-color: var(--line-strong);
+      background: #f8fafc;
     }
-    @media (prefers-color-scheme: dark) { pre.code-out { background: #2a2a2a; border-color: #444; color: #eee; } }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .app-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: 56px 1fr;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 0 18px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 210px;
+    }
+
+    .mark {
+      width: 31px;
+      height: 31px;
+      display: grid;
+      place-items: center;
+      border-radius: 7px;
+      background: #d7f0eb;
+      color: var(--accent);
+      font-weight: 800;
+    }
+
+    .brand-title {
+      font-size: 15px;
+      font-weight: 750;
+      line-height: 1.1;
+    }
+
+    .brand-subtitle {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 3px;
+    }
+
+    .nav button {
+      border: 0;
+      background: transparent;
+      min-height: 30px;
+      padding: 0 12px;
+      color: var(--muted);
+    }
+
+    .nav button.active {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    }
+
+    .health {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 250px;
+      justify-content: flex-end;
+    }
+
+    .health input {
+      width: 170px;
+      height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 0 10px;
+      color: var(--muted);
+      background: var(--surface);
+      font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--line-strong);
+      flex: none;
+    }
+
+    .status-dot.ok {
+      background: var(--success);
+    }
+
+    .status-dot.busy {
+      background: var(--warning);
+      animation: pulse 0.9s ease-in-out infinite;
+    }
+
+    .status-dot.error {
+      background: var(--danger);
+    }
+
+    @keyframes pulse {
+      50% {
+        opacity: 0.35;
+      }
+    }
+
+    main {
+      padding: 16px;
+      min-width: 0;
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(240px, 310px) minmax(380px, 1fr) minmax(280px, 380px);
+      gap: 14px;
+      height: calc(100vh - 88px);
+      min-height: 620px;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-header {
+      min-height: 48px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .panel-title {
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .panel-subtitle {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .panel-body {
+      padding: 14px;
+      overflow: auto;
+      min-height: 0;
+      flex: 1;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 650;
+    }
+
+    select,
+    textarea,
+    input[type="text"] {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--surface);
+      color: var(--text);
+      padding: 9px 10px;
+      outline: 0;
+    }
+
+    textarea {
+      min-height: 130px;
+      resize: vertical;
+      line-height: 1.45;
+    }
+
+    select:focus,
+    textarea:focus,
+    input[type="text"]:focus {
+      border-color: #7aa9d6;
+      box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .primary {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+      font-weight: 750;
+    }
+
+    .primary:hover {
+      background: #0b615b;
+      border-color: #0b615b;
+    }
+
+    .quiet {
+      color: var(--muted);
+    }
+
+    .icon-btn {
+      width: 36px;
+      padding: 0;
+      display: inline-grid;
+      place-items: center;
+      font-weight: 800;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 10px;
+    }
+
+    .chip {
+      min-height: 30px;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .hint-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 8px;
+    }
+
+    .code-shell {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 10px;
+      min-height: 0;
+      height: 100%;
+    }
+
+    .code-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .code-meta {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 12px;
+      min-width: 0;
+    }
+
+    pre {
+      margin: 0;
+    }
+
+    .code-output {
+      height: 100%;
+      min-height: 360px;
+      background: var(--code-bg);
+      color: var(--code-text);
+      border-radius: 8px;
+      border: 1px solid #263244;
+      overflow: auto;
+      padding: 14px;
+      font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      line-height: 1.55;
+      white-space: pre;
+    }
+
+    .empty-code {
+      color: #94a3b8;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 10px;
+    }
+
+    .event {
+      display: grid;
+      grid-template-columns: 20px 1fr;
+      gap: 10px;
+    }
+
+    .event-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 800;
+      background: var(--surface-2);
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .event-icon.pass {
+      background: #dcfce7;
+      color: var(--success);
+    }
+
+    .event-icon.fail {
+      background: #fee2e2;
+      color: var(--danger);
+    }
+
+    .event-icon.info {
+      background: #dbeafe;
+      color: var(--accent-2);
+    }
+
+    .event-title {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .event-time {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .event-detail {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+
+    .error-box {
+      margin-top: 8px;
+      color: #7f1d1d;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 7px;
+      padding: 8px;
+      font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+      font-size: 11px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #fbfcfe;
+    }
+
+    .metric-value {
+      font-size: 19px;
+      font-weight: 800;
+    }
+
+    .metric-label {
+      margin-top: 2px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .catalog-layout {
+      display: grid;
+      grid-template-columns: minmax(260px, 340px) 1fr;
+      gap: 14px;
+      min-height: calc(100vh - 88px);
+    }
+
+    .catalog-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .catalog-item {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      cursor: pointer;
+      background: var(--surface);
+    }
+
+    .catalog-item.active {
+      border-color: #7aa9d6;
+      background: #eff6ff;
+    }
+
+    .catalog-name {
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .catalog-description {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 9px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--muted);
+      background: #f8fafc;
+      font-size: 12px;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .runs-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .run-item {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 11px;
+      background: var(--surface);
+      display: grid;
+      gap: 8px;
+    }
+
+    .run-title {
+      font-size: 13px;
+      font-weight: 750;
+      line-height: 1.35;
+    }
+
+    .run-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .pill.pass {
+      background: #dcfce7;
+      color: var(--success);
+    }
+
+    .pill.fail {
+      background: #fee2e2;
+      color: var(--danger);
+    }
+
+    .placeholder {
+      display: grid;
+      place-items: center;
+      min-height: 180px;
+      color: var(--muted);
+      border: 1px dashed var(--line-strong);
+      border-radius: 8px;
+      text-align: center;
+      padding: 16px;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 1120px) {
+      .workspace,
+      .catalog-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+
+      .workspace {
+        min-height: 0;
+      }
+
+      .panel {
+        min-height: 320px;
+      }
+
+      .health {
+        min-width: 0;
+      }
+
+      .health input {
+        width: 145px;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .topbar {
+        height: auto;
+        align-items: stretch;
+        flex-direction: column;
+        padding: 12px;
+      }
+
+      .brand,
+      .health {
+        justify-content: space-between;
+        width: 100%;
+      }
+
+      .nav {
+        width: 100%;
+      }
+
+      .nav button {
+        flex: 1;
+      }
+
+      main {
+        padding: 10px;
+      }
+
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark">N2</div>
+        <div>
+          <div class="brand-title">NL2Pipeline</div>
+          <div class="brand-subtitle">PySpark generator workspace</div>
+        </div>
+      </div>
 
-<h1>NL2Pipeline — test client</h1>
+      <nav class="nav" aria-label="Main navigation">
+        <button class="active" data-view-button="generate" type="button">Generate</button>
+        <button data-view-button="environment" type="button">Environment</button>
+        <button data-view-button="runs" type="button">Runs</button>
+      </nav>
 
-<div class="card">
-  <label for="prompt-input">Natural language prompt</label>
-  <textarea id="prompt-input" placeholder="e.g. Count GDELT events by country every day and write the results to Cassandra."></textarea>
-  <div class="row">
-    <input class="url" id="backend-url" value="http://localhost:8000" spellcheck="false" aria-label="Backend URL"/>
-    <button id="send-btn">&#9654; Send</button>
-    <button id="clear-btn" style="color:#888">&#128465; Clear</button>
+      <div class="health">
+        <span id="health-dot" class="status-dot"></span>
+        <input id="backend-url" type="text" value="http://localhost:8000" aria-label="Backend URL" spellcheck="false" />
+        <button id="health-button" class="icon-btn" type="button" title="Check backend health">?</button>
+      </div>
+    </header>
+
+    <main>
+      <section id="view-generate" class="view active">
+        <div class="workspace">
+          <aside class="panel">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title">Prompt Builder</div>
+                <div class="panel-subtitle">Compose a request from known pipeline pieces</div>
+              </div>
+              <button id="load-env-button" class="icon-btn" type="button" title="Load environment">R</button>
+            </div>
+            <div class="panel-body">
+              <div class="field">
+                <label for="operation-select">Operation</label>
+                <select id="operation-select">
+                  <option value="aggregate">Aggregate events</option>
+                  <option value="filter">Filter events</option>
+                  <option value="store">Store raw events</option>
+                  <option value="quality">Clean data</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="group-select">Group or filter field</label>
+                <select id="group-select">
+                  <option value="country">country</option>
+                  <option value="event_code">event_code</option>
+                  <option value="actor1">actor1</option>
+                  <option value="actor2">actor2</option>
+                  <option value="is_root_event">is_root_event</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="metric-select">Metric</label>
+                <select id="metric-select">
+                  <option value="average tone">average tone</option>
+                  <option value="event count">event count</option>
+                  <option value="total mentions">total mentions</option>
+                  <option value="total articles">total articles</option>
+                  <option value="total sources">total sources</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="window-select">Window</label>
+                <select id="window-select">
+                  <option value="30-second">30-second</option>
+                  <option value="5-minute">5-minute</option>
+                  <option value="15-minute">15-minute</option>
+                  <option value="1-hour">1-hour</option>
+                  <option value="1-day">1-day</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="sink-select">Sink table</label>
+                <select id="sink-select">
+                  <option value="aggregated_results">aggregated_results</option>
+                  <option value="processed_events">processed_events</option>
+                </select>
+              </div>
+
+              <div class="toolbar">
+                <button id="compose-button" type="button">Build Prompt</button>
+                <button id="reset-builder-button" class="quiet" type="button">Reset</button>
+              </div>
+
+              <div class="chips" aria-label="Example prompts">
+                <button class="chip" type="button" data-example="Read GDELT events from Kafka and compute average tone by country over 1-hour tumbling windows. Write the results to the aggregated_results Cassandra table.">Avg tone by country</button>
+                <button class="chip" type="button" data-example="Read GDELT events from Kafka, filter to events with num_mentions greater than 20, and store each event in processed_events.">High mention events</button>
+                <button class="chip" type="button" data-example="Read GDELT events from Kafka and count events by event_code every 15 minutes. Write the metric values to aggregated_results.">Event code counts</button>
+              </div>
+            </div>
+          </aside>
+
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title">Generate Pipeline</div>
+                <div class="panel-subtitle">POST /generate streams validation progress</div>
+              </div>
+              <div class="toolbar">
+                <button id="generate-button" class="primary" type="button">Run</button>
+                <button id="clear-button" class="icon-btn" type="button" title="Clear workspace">X</button>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="field">
+                <label for="prompt-input">Natural language request</label>
+                <textarea id="prompt-input" placeholder="Read GDELT events from Kafka and compute average tone by country over 1-hour windows. Write the results to Cassandra."></textarea>
+                <div class="hint-row">
+                  <span>Ctrl+Enter runs the request</span>
+                  <span id="prompt-count">0 characters</span>
+                </div>
+              </div>
+
+              <div class="code-shell">
+                <div class="code-actions">
+                  <div class="code-meta">
+                    <span id="run-state-dot" class="status-dot"></span>
+                    <span id="run-state">Idle</span>
+                  </div>
+                  <div class="toolbar">
+                    <button id="copy-code-button" class="icon-btn" type="button" title="Copy code">C</button>
+                    <button id="download-code-button" class="icon-btn" type="button" title="Download code">D</button>
+                  </div>
+                </div>
+                <pre id="code-output" class="code-output empty-code">Generated PySpark code will appear here.</pre>
+              </div>
+            </div>
+          </section>
+
+          <aside class="panel">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title">Validation</div>
+                <div class="panel-subtitle">Live inference and harness events</div>
+              </div>
+              <span id="attempt-pill" class="pill">0 attempts</span>
+            </div>
+            <div class="panel-body">
+              <div class="summary-grid">
+                <div class="metric">
+                  <div id="attempt-count" class="metric-value">0</div>
+                  <div class="metric-label">Attempts</div>
+                </div>
+                <div class="metric">
+                  <div id="latency-value" class="metric-value">-</div>
+                  <div class="metric-label">Latency</div>
+                </div>
+                <div class="metric">
+                  <div id="status-value" class="metric-value">Idle</div>
+                  <div class="metric-label">Status</div>
+                </div>
+              </div>
+              <div id="timeline" class="timeline">
+                <div class="placeholder">Validation events will appear as the backend streams them.</div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="view-environment" class="view">
+        <div class="catalog-layout">
+          <aside class="panel">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title">Catalog</div>
+                <div class="panel-subtitle">Loaded from GET /environments</div>
+              </div>
+              <button id="refresh-env-button" class="icon-btn" type="button" title="Refresh catalog">R</button>
+            </div>
+            <div class="panel-body">
+              <div id="catalog-list" class="catalog-list">
+                <div class="placeholder">Load the environment to inspect topics, fields, and tables.</div>
+              </div>
+            </div>
+          </aside>
+
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <div id="catalog-detail-title" class="panel-title">Environment Detail</div>
+                <div id="catalog-detail-subtitle" class="panel-subtitle">Select a catalog item</div>
+              </div>
+            </div>
+            <div id="catalog-detail" class="panel-body">
+              <div class="placeholder">Kafka topics, GDELT fields, and Cassandra schema will render here.</div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section id="view-runs" class="view">
+        <section class="panel" style="min-height: calc(100vh - 88px);">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">Run History</div>
+              <div class="panel-subtitle">Stored locally in this browser session</div>
+            </div>
+            <button id="clear-runs-button" type="button">Clear Runs</button>
+          </div>
+          <div class="panel-body">
+            <div id="runs-list" class="runs-list">
+              <div class="placeholder">Completed generations will appear here.</div>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
   </div>
-  <p style="font-size:12px;color:#aaa;margin-top:8px">Ctrl+Enter to send</p>
-</div>
 
-<div class="card">
-  <div class="status-bar">
-    <div class="dot" id="dot"></div>
-    <span id="status-text">Idle — backend at <span id="url-preview">http://localhost:8000</span></span>
-  </div>
-  <div id="events-list">
-    <div class="empty">Events will appear here as they stream in.</div>
-  </div>
-</div>
+  <script>
+    const state = {
+      env: null,
+      selectedCatalog: null,
+      events: [],
+      runs: [],
+      code: "",
+      activeRun: null
+    };
 
-<script>
-const promptEl  = document.getElementById('prompt-input');
-const urlEl     = document.getElementById('backend-url');
-const sendBtn   = document.getElementById('send-btn');
-const clearBtn  = document.getElementById('clear-btn');
-const list      = document.getElementById('events-list');
-const dot       = document.getElementById('dot');
-const statusTx  = document.getElementById('status-text');
-const urlPrev   = document.getElementById('url-preview');
+    const els = {
+      backendUrl: document.getElementById("backend-url"),
+      healthDot: document.getElementById("health-dot"),
+      healthButton: document.getElementById("health-button"),
+      loadEnvButton: document.getElementById("load-env-button"),
+      refreshEnvButton: document.getElementById("refresh-env-button"),
+      operationSelect: document.getElementById("operation-select"),
+      groupSelect: document.getElementById("group-select"),
+      metricSelect: document.getElementById("metric-select"),
+      windowSelect: document.getElementById("window-select"),
+      sinkSelect: document.getElementById("sink-select"),
+      composeButton: document.getElementById("compose-button"),
+      resetBuilderButton: document.getElementById("reset-builder-button"),
+      promptInput: document.getElementById("prompt-input"),
+      promptCount: document.getElementById("prompt-count"),
+      generateButton: document.getElementById("generate-button"),
+      clearButton: document.getElementById("clear-button"),
+      runStateDot: document.getElementById("run-state-dot"),
+      runState: document.getElementById("run-state"),
+      codeOutput: document.getElementById("code-output"),
+      copyCodeButton: document.getElementById("copy-code-button"),
+      downloadCodeButton: document.getElementById("download-code-button"),
+      attemptPill: document.getElementById("attempt-pill"),
+      attemptCount: document.getElementById("attempt-count"),
+      latencyValue: document.getElementById("latency-value"),
+      statusValue: document.getElementById("status-value"),
+      timeline: document.getElementById("timeline"),
+      catalogList: document.getElementById("catalog-list"),
+      catalogDetailTitle: document.getElementById("catalog-detail-title"),
+      catalogDetailSubtitle: document.getElementById("catalog-detail-subtitle"),
+      catalogDetail: document.getElementById("catalog-detail"),
+      runsList: document.getElementById("runs-list"),
+      clearRunsButton: document.getElementById("clear-runs-button")
+    };
 
-urlEl.addEventListener('input', () => { urlPrev.textContent = urlEl.value; });
+    const eventLabels = {
+      metadata_loaded: "Metadata loaded",
+      inference_complete: "Inference complete",
+      lint_passed: "Lint passed",
+      lint_failed: "Lint failed",
+      docker_passed: "Spark check passed",
+      docker_failed: "Spark check failed",
+      cassandra_passed: "Cassandra schema passed",
+      cassandra_failed: "Cassandra schema failed",
+      done: "Generation done",
+      error: "Request error"
+    };
 
-function setStatus(state, text) {
-  dot.className = 'dot ' + state;
-  statusTx.textContent = text;
-}
+    const exampleButtons = Array.from(document.querySelectorAll("[data-example]"));
+    const viewButtons = Array.from(document.querySelectorAll("[data-view-button]"));
 
-function addEvent(type, content) {
-  const empty = list.querySelector('.empty');
-  if (empty) empty.remove();
-
-  const row = document.createElement('div');
-  row.className = 'event-row';
-
-  const badgeClass = {
-    metadata_loaded:    'badge-meta',
-    inference_complete: 'badge-infer',
-    done:               'badge-done',
-    error:              'badge-error',
-  }[type] || 'badge-info';
-
-  const badge = document.createElement('span');
-  badge.className = 'badge ' + badgeClass;
-  badge.textContent = type;
-  row.appendChild(badge);
-
-  const dataWrap = document.createElement('div');
-  dataWrap.className = 'event-data';
-
-  const parsed = typeof content === 'object' ? content : (() => { try { return JSON.parse(content); } catch { return null; } })();
-
-  if (parsed && (type === 'inference_complete' || type === 'done') && parsed.code) {
-    const meta = document.createElement('div');
-    meta.style.marginBottom = '4px';
-    const keys = Object.keys(parsed).filter(k => k !== 'code' && k !== 'attempt_log');
-    meta.textContent = keys.map(k => k + ': ' + JSON.stringify(parsed[k])).join('  ·  ');
-    dataWrap.appendChild(meta);
-    const pre = document.createElement('pre');
-    pre.className = 'code-out';
-    pre.textContent = parsed.code;
-    dataWrap.appendChild(pre);
-  } else {
-    dataWrap.textContent = parsed ? JSON.stringify(parsed) : String(content);
-  }
-
-  row.appendChild(dataWrap);
-  list.appendChild(row);
-  row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-sendBtn.addEventListener('click', async () => {
-  const prompt = promptEl.value.trim();
-  if (!prompt) { promptEl.focus(); return; }
-
-  const base = urlEl.value.replace(/\/$/, '');
-  sendBtn.disabled = true;
-  setStatus('connecting', 'Connecting to ' + base + ' …');
-
-  try {
-    const res = await fetch(base + '/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt }),
-    });
-
-    if (!res.ok) {
-      const err = await res.text();
-      addEvent('error', res.status + ' — ' + err);
-      setStatus('error', 'Request failed (' + res.status + ')');
-      sendBtn.disabled = false;
-      return;
+    function baseUrl() {
+      return els.backendUrl.value.trim().replace(/\/$/, "");
     }
 
-    setStatus('streaming', 'Streaming …');
-    const reader  = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buf = '';
+    function setRunState(kind, text) {
+      els.runStateDot.className = "status-dot " + (kind || "");
+      els.runState.textContent = text;
+      els.statusValue.textContent = text.split(" ")[0] || text;
+    }
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buf += decoder.decode(value, { stream: true });
+    function setHealth(kind) {
+      els.healthDot.className = "status-dot " + (kind || "");
+    }
 
-      const parts = buf.split('\n\n');
-      buf = parts.pop();
+    function formatMs(ms) {
+      if (!Number.isFinite(ms)) return "-";
+      if (ms < 1000) return ms + "ms";
+      return (ms / 1000).toFixed(1) + "s";
+    }
 
-      for (const part of parts) {
-        const lines = part.trim().split('\n');
-        let eventType = 'message';
-        let dataLine  = '';
-        for (const line of lines) {
-          if (line.startsWith('event:')) eventType = line.slice(6).trim();
-          if (line.startsWith('data:'))  dataLine  = line.slice(5).trim();
+    function nowTime() {
+      return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function eventKind(type) {
+      if (type.endsWith("_failed") || type === "error") return "fail";
+      if (type.endsWith("_passed") || type === "done") return "pass";
+      return "info";
+    }
+
+    function eventIcon(kind) {
+      if (kind === "pass") return "✓";
+      if (kind === "fail") return "!";
+      return "i";
+    }
+
+    function clearTimeline() {
+      state.events = [];
+      els.timeline.innerHTML = '<div class="placeholder">Validation events will appear as the backend streams them.</div>';
+      els.attemptPill.textContent = "0 attempts";
+      els.attemptCount.textContent = "0";
+      els.latencyValue.textContent = "-";
+    }
+
+    function addTimelineEvent(type, data) {
+      if (els.timeline.querySelector(".placeholder")) {
+        els.timeline.innerHTML = "";
+      }
+
+      const kind = eventKind(type);
+      const detailParts = [];
+      if (data && data.attempt) detailParts.push("Attempt " + data.attempt);
+      if (data && data.stage) detailParts.push(data.stage);
+      if (data && data.env_chars) detailParts.push(data.env_chars + " environment chars");
+      if (data && data.latency_ms) detailParts.push("Latency " + formatMs(data.latency_ms));
+      if (data && data.attempts) detailParts.push(data.attempts + " attempts");
+
+      const item = document.createElement("div");
+      item.className = "event";
+      item.innerHTML = `
+        <div class="event-icon ${kind}">${eventIcon(kind)}</div>
+        <div>
+          <div class="event-title">
+            <span>${escapeHtml(eventLabels[type] || type)}</span>
+            <span class="event-time">${nowTime()}</span>
+          </div>
+          <div class="event-detail">${escapeHtml(detailParts.join(" · ") || "No additional details")}</div>
+          ${data && data.error ? `<div class="error-box">${escapeHtml(data.error)}</div>` : ""}
+        </div>
+      `;
+      els.timeline.appendChild(item);
+      item.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+      state.events.push({ type, data, at: new Date().toISOString() });
+
+      const attempts = Math.max(
+        0,
+        ...state.events.map((evt) => evt.data && evt.data.attempt ? Number(evt.data.attempt) : 0),
+        data && data.attempts ? Number(data.attempts) : 0
+      );
+      els.attemptPill.textContent = attempts + (attempts === 1 ? " attempt" : " attempts");
+      els.attemptCount.textContent = attempts;
+      if (data && data.latency_ms) els.latencyValue.textContent = formatMs(data.latency_ms);
+    }
+
+    function setCode(code) {
+      state.code = code || "";
+      els.codeOutput.textContent = state.code || "Generated PySpark code will appear here.";
+      els.codeOutput.classList.toggle("empty-code", !state.code);
+    }
+
+    function buildPrompt() {
+      const op = els.operationSelect.value;
+      const group = els.groupSelect.value;
+      const metric = els.metricSelect.value;
+      const windowSize = els.windowSelect.value;
+      const sink = els.sinkSelect.value;
+
+      if (op === "store") {
+        return "Read GDELT events from the gdelt-events-raw Kafka topic and store each event in the " + sink + " Cassandra table. Include the source topic, event date, event id, full JSON payload, and ingestion timestamp.";
+      }
+
+      if (op === "filter") {
+        return "Read GDELT events from the gdelt-events-raw Kafka topic, filter to records where " + group + " is not null, and write the matching events to the " + sink + " Cassandra table.";
+      }
+
+      if (op === "quality") {
+        return "Read GDELT events from the gdelt-events-raw Kafka topic, remove records with missing " + group + " values, remove records with invalid timestamps, and store cleaned events in the " + sink + " Cassandra table.";
+      }
+
+      return "Read GDELT events from the gdelt-events-raw Kafka topic and compute " + metric + " by " + group + " over " + windowSize + " tumbling windows. Write the results to the " + sink + " Cassandra table.";
+    }
+
+    async function checkHealth() {
+      setHealth("busy");
+      try {
+        const res = await fetch(baseUrl() + "/health");
+        setHealth(res.ok ? "ok" : "error");
+      } catch {
+        setHealth("error");
+      }
+    }
+
+    async function loadEnvironment() {
+      setHealth("busy");
+      try {
+        const res = await fetch(baseUrl() + "/environments");
+        if (!res.ok) throw new Error("Environment request failed with status " + res.status);
+        state.env = await res.json();
+        setHealth("ok");
+        renderCatalog();
+      } catch (error) {
+        setHealth("error");
+        els.catalogList.innerHTML = `<div class="placeholder">${escapeHtml(error.message)}</div>`;
+      }
+    }
+
+    function catalogItems() {
+      const env = state.env;
+      if (!env) return [];
+
+      const topics = (((env.services || {}).kafka || {}).topics || []).map((topic) => ({
+        id: "topic:" + topic.name,
+        kind: "Kafka topic",
+        name: topic.name,
+        description: topic.description || "",
+        data: topic
+      }));
+
+      const fields = (((env.gdelt_schema || {}).fields) || []).map((field) => ({
+        id: "field:" + field.name,
+        kind: "GDELT field",
+        name: field.name,
+        description: field.description || "",
+        data: field
+      }));
+
+      const tables = (env.cassandra_tables || []).map((table) => ({
+        id: "table:" + table.name,
+        kind: "Cassandra table",
+        name: table.name,
+        description: table.description || "",
+        data: table
+      }));
+
+      return [
+        { id: "overview", kind: "Overview", name: env.environment ? env.environment.name : "Environment", description: env.environment ? env.environment.description : "", data: env },
+        ...topics,
+        ...fields,
+        ...tables
+      ];
+    }
+
+    function renderCatalog() {
+      const items = catalogItems();
+      if (!items.length) {
+        els.catalogList.innerHTML = '<div class="placeholder">No environment data loaded.</div>';
+        return;
+      }
+
+      if (!state.selectedCatalog) state.selectedCatalog = items[0].id;
+
+      els.catalogList.innerHTML = "";
+      for (const item of items) {
+        const div = document.createElement("div");
+        div.className = "catalog-item" + (state.selectedCatalog === item.id ? " active" : "");
+        div.tabIndex = 0;
+        div.innerHTML = `
+          <div class="catalog-name">${escapeHtml(item.name)}</div>
+          <div class="catalog-description">${escapeHtml(item.kind)}</div>
+        `;
+        div.addEventListener("click", () => {
+          state.selectedCatalog = item.id;
+          renderCatalog();
+        });
+        els.catalogList.appendChild(div);
+      }
+
+      const active = items.find((item) => item.id === state.selectedCatalog) || items[0];
+      renderCatalogDetail(active);
+    }
+
+    function renderCatalogDetail(item) {
+      els.catalogDetailTitle.textContent = item.name;
+      els.catalogDetailSubtitle.textContent = item.kind;
+
+      if (item.id === "overview") {
+        const env = item.data;
+        const topics = (((env.services || {}).kafka || {}).topics || []).length;
+        const fields = (((env.gdelt_schema || {}).fields) || []).length;
+        const tables = (env.cassandra_tables || []).length;
+        els.catalogDetail.innerHTML = `
+          <div class="summary-grid">
+            <div class="metric"><div class="metric-value">${topics}</div><div class="metric-label">Kafka topics</div></div>
+            <div class="metric"><div class="metric-value">${fields}</div><div class="metric-label">GDELT fields</div></div>
+            <div class="metric"><div class="metric-value">${tables}</div><div class="metric-label">Cassandra tables</div></div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <tbody>
+                <tr><th>Name</th><td>${escapeHtml((env.environment || {}).name || "-")}</td></tr>
+                <tr><th>Version</th><td>${escapeHtml((env.environment || {}).version || "-")}</td></tr>
+                <tr><th>Domain</th><td>${escapeHtml((env.environment || {}).domain || "-")}</td></tr>
+                <tr><th>Dataset</th><td>${escapeHtml((env.dataset || {}).name || "-")}</td></tr>
+              </tbody>
+            </table>
+          </div>
+        `;
+        return;
+      }
+
+      if (item.id.startsWith("field:")) {
+        const f = item.data;
+        els.catalogDetail.innerHTML = `
+          <div class="table-wrap">
+            <table>
+              <tbody>
+                <tr><th>Type</th><td>${escapeHtml(f.type || "-")}</td></tr>
+                <tr><th>Nullable</th><td>${escapeHtml(String(f.nullable))}</td></tr>
+                <tr><th>Description</th><td>${escapeHtml(f.description || "-")}</td></tr>
+              </tbody>
+            </table>
+          </div>
+        `;
+        return;
+      }
+
+      if (item.id.startsWith("topic:")) {
+        const t = item.data;
+        els.catalogDetail.innerHTML = `
+          <div class="table-wrap">
+            <table>
+              <tbody>
+                <tr><th>Type</th><td>${escapeHtml(t.type || "-")}</td></tr>
+                <tr><th>Partitions</th><td>${escapeHtml(t.partitions || "-")}</td></tr>
+                <tr><th>Retention</th><td>${escapeHtml(t.retention_ms || "-")} ms</td></tr>
+                <tr><th>Key field</th><td>${escapeHtml(t.key_field || "-")}</td></tr>
+                <tr><th>Value format</th><td>${escapeHtml(t.value_format || "-")}</td></tr>
+                <tr><th>Allowed operations</th><td>${escapeHtml((t.allowed_operations || []).join(", ") || "-")}</td></tr>
+                <tr><th>Description</th><td>${escapeHtml(t.description || "-")}</td></tr>
+              </tbody>
+            </table>
+          </div>
+        `;
+        return;
+      }
+
+      if (item.id.startsWith("table:")) {
+        const table = item.data;
+        const rows = Object.entries(table.columns || {}).map(([name, type]) => `
+          <tr><td>${escapeHtml(name)}</td><td>${escapeHtml(type)}</td></tr>
+        `).join("");
+        els.catalogDetail.innerHTML = `
+          <p class="catalog-description" style="margin: 0 0 12px;">${escapeHtml(table.description || "")}</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Column</th><th>Type</th></tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        `;
+      }
+    }
+
+    async function generatePipeline() {
+      const prompt = els.promptInput.value.trim();
+      if (!prompt) {
+        els.promptInput.focus();
+        return;
+      }
+
+      clearTimeline();
+      setCode("");
+      setRunState("busy", "Running");
+      els.generateButton.disabled = true;
+
+      const run = {
+        prompt,
+        startedAt: new Date().toISOString(),
+        status: "running",
+        attempts: 0,
+        latency: null,
+        code: ""
+      };
+      state.activeRun = run;
+
+      try {
+        const res = await fetch(baseUrl() + "/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt })
+        });
+
+        if (!res.ok || !res.body) {
+          const text = await res.text();
+          throw new Error("Generate failed with status " + res.status + ": " + text);
         }
-        if (dataLine) {
-          try { addEvent(eventType, JSON.parse(dataLine)); }
-          catch { addEvent(eventType, dataLine); }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const read = await reader.read();
+          if (read.done) break;
+
+          buffer += decoder.decode(read.value, { stream: true });
+          const frames = buffer.split("\n\n");
+          buffer = frames.pop() || "";
+
+          for (const frame of frames) {
+            const parsed = parseSseFrame(frame);
+            if (!parsed) continue;
+            handleGenerateEvent(parsed.event, parsed.data);
+          }
+        }
+      } catch (error) {
+        addTimelineEvent("error", { error: error.message });
+        run.status = "failed";
+        setRunState("error", "Failed");
+      } finally {
+        els.generateButton.disabled = false;
+        if (state.activeRun) {
+          state.activeRun.finishedAt = new Date().toISOString();
+          state.runs.unshift(state.activeRun);
+          state.activeRun = null;
+          renderRuns();
         }
       }
     }
 
-    setStatus('done', 'Done');
-  } catch (e) {
-    addEvent('error', e.message);
-    setStatus('error', 'Error — is the backend running?');
-  }
+    function parseSseFrame(frame) {
+      const lines = frame.split(/\r?\n/);
+      let event = "message";
+      let data = "";
+      for (const line of lines) {
+        if (line.startsWith("event:")) event = line.slice(6).trim();
+        if (line.startsWith("data:")) data += line.slice(5).trim();
+      }
+      if (!data) return null;
+      try {
+        return { event, data: JSON.parse(data) };
+      } catch {
+        return { event, data: { raw: data } };
+      }
+    }
 
-  sendBtn.disabled = false;
-});
+    function handleGenerateEvent(type, data) {
+      addTimelineEvent(type, data);
 
-clearBtn.addEventListener('click', () => {
-  list.innerHTML = '<div class="empty">Events will appear here as they stream in.</div>';
-  dot.className = 'dot';
-  statusTx.textContent = 'Idle — backend at ' + urlEl.value;
-});
+      if (data && data.code && (type === "inference_complete" || type === "done")) {
+        setCode(data.code);
+        if (state.activeRun) state.activeRun.code = data.code;
+      }
 
-promptEl.addEventListener('keydown', e => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') sendBtn.click();
-});
-</script>
+      if (type.endsWith("_failed")) {
+        setRunState("error", "Repairing");
+        if (state.activeRun) state.activeRun.status = "repairing";
+      }
+
+      if (type.endsWith("_passed")) {
+        setRunState("busy", "Validating");
+      }
+
+      if (type === "done") {
+        const passed = !state.events.some((evt) => evt.type.endsWith("_failed")) || Boolean(data.code);
+        setRunState(passed ? "ok" : "error", passed ? "Done" : "Failed");
+        if (state.activeRun) {
+          state.activeRun.status = passed ? "done" : "failed";
+          state.activeRun.attempts = data.attempts || 0;
+          state.activeRun.latency = data.latency_ms || null;
+          state.activeRun.code = data.code || state.activeRun.code;
+        }
+      }
+    }
+
+    function renderRuns() {
+      if (!state.runs.length) {
+        els.runsList.innerHTML = '<div class="placeholder">Completed generations will appear here.</div>';
+        return;
+      }
+
+      els.runsList.innerHTML = "";
+      for (const run of state.runs) {
+        const item = document.createElement("div");
+        item.className = "run-item";
+        const statusClass = run.status === "done" ? "pass" : "fail";
+        item.innerHTML = `
+          <div class="run-title">${escapeHtml(run.prompt)}</div>
+          <div class="run-meta">
+            <span class="pill ${statusClass}">${escapeHtml(run.status)}</span>
+            <span class="pill">${escapeHtml(String(run.attempts || 0))} attempts</span>
+            <span class="pill">${escapeHtml(formatMs(run.latency))}</span>
+            <span class="pill">${escapeHtml(new Date(run.startedAt).toLocaleString())}</span>
+          </div>
+          <div class="toolbar">
+            <button type="button" data-load-run>Load Code</button>
+            <button type="button" data-rerun>Rerun</button>
+          </div>
+        `;
+        item.querySelector("[data-load-run]").addEventListener("click", () => {
+          setCode(run.code);
+          switchView("generate");
+        });
+        item.querySelector("[data-rerun]").addEventListener("click", () => {
+          els.promptInput.value = run.prompt;
+          updatePromptCount();
+          switchView("generate");
+          generatePipeline();
+        });
+        els.runsList.appendChild(item);
+      }
+    }
+
+    function switchView(view) {
+      document.querySelectorAll(".view").forEach((el) => el.classList.remove("active"));
+      document.getElementById("view-" + view).classList.add("active");
+      viewButtons.forEach((button) => button.classList.toggle("active", button.dataset.viewButton === view));
+      if (view === "environment" && !state.env) loadEnvironment();
+    }
+
+    function updatePromptCount() {
+      const count = els.promptInput.value.length;
+      els.promptCount.textContent = count + (count === 1 ? " character" : " characters");
+    }
+
+    async function copyCode() {
+      if (!state.code) return;
+      await navigator.clipboard.writeText(state.code);
+      els.copyCodeButton.textContent = "✓";
+      setTimeout(() => {
+        els.copyCodeButton.textContent = "C";
+      }, 900);
+    }
+
+    function downloadCode() {
+      if (!state.code) return;
+      const blob = new Blob([state.code], { type: "text/x-python" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "nl2pipeline_generated.py";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function clearWorkspace() {
+      els.promptInput.value = "";
+      updatePromptCount();
+      clearTimeline();
+      setCode("");
+      setRunState("", "Idle");
+      els.statusValue.textContent = "Idle";
+    }
+
+    viewButtons.forEach((button) => {
+      button.addEventListener("click", () => switchView(button.dataset.viewButton));
+    });
+
+    exampleButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        els.promptInput.value = button.dataset.example;
+        updatePromptCount();
+      });
+    });
+
+    els.healthButton.addEventListener("click", checkHealth);
+    els.loadEnvButton.addEventListener("click", loadEnvironment);
+    els.refreshEnvButton.addEventListener("click", loadEnvironment);
+    els.composeButton.addEventListener("click", () => {
+      els.promptInput.value = buildPrompt();
+      updatePromptCount();
+    });
+    els.resetBuilderButton.addEventListener("click", () => {
+      els.operationSelect.value = "aggregate";
+      els.groupSelect.value = "country";
+      els.metricSelect.value = "average tone";
+      els.windowSelect.value = "30-second";
+      els.sinkSelect.value = "aggregated_results";
+    });
+    els.generateButton.addEventListener("click", generatePipeline);
+    els.clearButton.addEventListener("click", clearWorkspace);
+    els.copyCodeButton.addEventListener("click", copyCode);
+    els.downloadCodeButton.addEventListener("click", downloadCode);
+    els.clearRunsButton.addEventListener("click", () => {
+      state.runs = [];
+      renderRuns();
+    });
+    els.promptInput.addEventListener("input", updatePromptCount);
+    els.promptInput.addEventListener("keydown", (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        event.preventDefault();
+        generatePipeline();
+      }
+    });
+
+    updatePromptCount();
+    renderRuns();
+    checkHealth();
+  </script>
 </body>
 </html>

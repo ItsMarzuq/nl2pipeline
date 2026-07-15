@@ -3,11 +3,13 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
+import uuid
 from typing import Any, AsyncGenerator
 
 from .code_parser import ParseError, extract_python
-from .prompt_builder import apply_template, build_messages
+from .prompt_builder import build_messages, to_langchain_messages
 from ..validation.harness import run_harness, STAGE_EVENT_MAP
+from ..validation.run_log import log_run
 
 log = logging.getLogger(__name__)
 
@@ -40,17 +42,17 @@ class GenerationEngine:
 
     def __init__(
         self,
-        tokenizer: Any,
         llm: Any,
         env_yaml: str,
         max_attempts: int,
         mock: bool = False,
+        cassandra_session: Any = None,
     ) -> None:
-        self._tokenizer = tokenizer
         self._llm = llm
         self._env_yaml = env_yaml
         self._max_attempts = max_attempts
         self._mock = mock
+        self._cassandra_session = cassandra_session
 
     async def run(
         self,
@@ -63,13 +65,25 @@ class GenerationEngine:
         yield {"event": "metadata_loaded", "data": {"env_loaded": True, "env_chars": len(env_yaml)}}
 
         if self._mock:
+            latency_ms = int(time.time() * 1000) - start_ms
             yield {"event": "inference_complete", "data": {"attempt": 1, "code": _MOCK_CODE}}
+            log_run(
+                self._cassandra_session,
+                run_id=uuid.uuid4(),
+                nl_prompt=prompt,
+                generated_code=_MOCK_CODE,
+                status="pass",
+                error_msg=None,
+                attempt_number=1,
+                model_used="mock",
+                latency_ms=latency_ms,
+            )
             yield {
                 "event": "done",
                 "data": {
                     "code": _MOCK_CODE,
                     "attempts": 1,
-                    "latency_ms": int(time.time() * 1000) - start_ms,
+                    "latency_ms": latency_ms,
                     "attempt_log": [{"attempt": 1, "status": "pass"}],
                 },
             }
@@ -81,15 +95,37 @@ class GenerationEngine:
 
         for attempt in range(1, self._max_attempts + 1):
             messages = build_messages(env_yaml, prompt, correction_history)
-            formatted_prompt = apply_template(self._tokenizer, messages)
+            lc_messages = to_langchain_messages(messages)
 
-            raw_output: str = await asyncio.to_thread(self._llm.invoke, formatted_prompt)
+            llm_start_ms = int(time.time() * 1000)
+            response = await asyncio.to_thread(self._llm.invoke, lc_messages)
+            llm_latency_ms = int(time.time() * 1000) - llm_start_ms
+
+            meta = response.response_metadata or {}
+            eval_count = meta.get("eval_count")
+            eval_duration_ns = meta.get("eval_duration")
+            if eval_count and eval_duration_ns:
+                tok_per_s = eval_count / (eval_duration_ns / 1e9)
+                log.info(
+                    "LLM invoke attempt %d took %dms (wall) — Ollama reports %d tokens generated "
+                    "in %.2fs = %.1f tok/s (prompt_eval_count=%s, load_duration=%sns)",
+                    attempt, llm_latency_ms, eval_count, eval_duration_ns / 1e9, tok_per_s,
+                    meta.get("prompt_eval_count"), meta.get("load_duration"),
+                )
+            else:
+                log.info("LLM invoke attempt %d took %dms", attempt, llm_latency_ms)
+            raw_output: str = response.content
 
             try:
                 code = extract_python(raw_output)
             except ParseError as exc:
                 log.warning("ParseError on attempt %d: %s", attempt, exc)
-                attempt_log.append({"attempt": attempt, "status": "fail", "error": str(exc)})
+                attempt_log.append({
+                    "attempt": attempt,
+                    "status": "fail",
+                    "error": str(exc),
+                    "llm_latency_ms": llm_latency_ms,
+                })
                 correction_history.extend([
                     {"role": "assistant", "content": raw_output},
                     {
@@ -101,20 +137,18 @@ class GenerationEngine:
                     },
                 ])
                 if attempt == self._max_attempts:
-                    yield {
-                        "event": "done",
-                        "data": {
-                            "code": "",
-                            "attempts": len(attempt_log),
-                            "latency_ms": int(time.time() * 1000) - start_ms,
-                            "attempt_log": attempt_log,
-                        },
-                    }
+                    break
                 continue
 
-            yield {"event": "inference_complete", "data": {"attempt": attempt, "code": code}}
+            yield {
+                "event": "inference_complete",
+                "data": {"attempt": attempt, "code": code, "llm_latency_ms": llm_latency_ms},
+            }
 
-            stage_results = await asyncio.to_thread(run_harness, code, attempt)
+            harness_start_ms = int(time.time() * 1000)
+            stage_results = await asyncio.to_thread(run_harness, code, attempt, self._cassandra_session)
+            harness_latency_ms = int(time.time() * 1000) - harness_start_ms
+            log.info("Harness attempt %d took %dms", attempt, harness_latency_ms)
 
             harness_error: str | None = None
             for label, error in stage_results:
@@ -127,11 +161,22 @@ class GenerationEngine:
 
             if harness_error is None:
                 final_code = code
-                attempt_log.append({"attempt": attempt, "status": "pass"})
+                attempt_log.append({
+                    "attempt": attempt,
+                    "status": "pass",
+                    "llm_latency_ms": llm_latency_ms,
+                    "harness_latency_ms": harness_latency_ms,
+                })
                 break
 
             log.warning("Harness error on attempt %d: %s", attempt, harness_error)
-            attempt_log.append({"attempt": attempt, "status": "fail", "error": harness_error})
+            attempt_log.append({
+                "attempt": attempt,
+                "status": "fail",
+                "error": harness_error,
+                "llm_latency_ms": llm_latency_ms,
+                "harness_latency_ms": harness_latency_ms,
+            })
             correction_history.extend([
                 {"role": "assistant", "content": raw_output},
                 {
@@ -147,12 +192,26 @@ class GenerationEngine:
             if attempt == self._max_attempts:
                 final_code = code
 
+        total_latency_ms = int(time.time() * 1000) - start_ms
+        last_attempt = attempt_log[-1] if attempt_log else None
+        log_run(
+            self._cassandra_session,
+            run_id=uuid.uuid4(),
+            nl_prompt=prompt,
+            generated_code=final_code,
+            status=last_attempt["status"] if last_attempt else "fail",
+            error_msg=last_attempt.get("error") if last_attempt else None,
+            attempt_number=len(attempt_log),
+            model_used=getattr(self._llm, "model", "unknown"),
+            latency_ms=total_latency_ms,
+        )
+
         yield {
             "event": "done",
             "data": {
                 "code": final_code,
                 "attempts": len(attempt_log),
-                "latency_ms": int(time.time() * 1000) - start_ms,
+                "latency_ms": total_latency_ms,
                 "attempt_log": attempt_log,
             },
         }

@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from .cassandra_client import connect as connect_cassandra
 from .config import Settings
 from .inference.model_loader import load_llm
 from .inference.engine import GenerationEngine
@@ -39,26 +40,39 @@ async def lifespan(app: FastAPI):
 
     if settings.MOCK_LLM:
         log.warning("MOCK_LLM=true — skipping model load, returning canned responses")
-        tokenizer, llm = None, None
+        llm = None
     else:
-        log.info("Loading model: %s", settings.BASE_MODEL_ID)
-        tokenizer, llm = await asyncio.to_thread(
+        log.info("Connecting to Ollama model: %s", settings.OLLAMA_MODEL)
+        llm = await asyncio.to_thread(
             load_llm,
-            settings.BASE_MODEL_ID,
-            settings.ADAPTER_PATH,
+            settings.OLLAMA_BASE_URL,
+            settings.OLLAMA_MODEL,
             settings.MAX_NEW_TOKENS,
+            settings.OLLAMA_NUM_CTX,
         )
-        log.info("Model ready")
+        log.info("Ollama client ready")
+
+    cassandra_session = await asyncio.to_thread(
+        connect_cassandra,
+        settings.CASSANDRA_HOST,
+        settings.CASSANDRA_PORT,
+        settings.CASSANDRA_USERNAME,
+        settings.CASSANDRA_PASSWORD,
+        settings.CASSANDRA_KEYSPACE,
+    )
 
     app.state.engine = GenerationEngine(
-        tokenizer=tokenizer,
         llm=llm,
         env_yaml=env_yaml,
         max_attempts=settings.MAX_ATTEMPTS,
         mock=settings.MOCK_LLM,
+        cassandra_session=cassandra_session,
     )
 
     yield
+
+    if cassandra_session is not None:
+        cassandra_session.cluster.shutdown()
 
 
 # ---------------------------------------------------------------------------

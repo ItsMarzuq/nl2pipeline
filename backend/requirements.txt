@@ -7,7 +7,6 @@ pydantic-settings>=2.2
 # --- Utilities ---
 pyyaml>=6.0
 ruff>=0.4
-docker>=7.0
 
 # --- Cassandra (harness schema check) ---
 cassandra-driver>=3.29
@@ -25,3 +24,6 @@ tiktoken
 
 # --- LangChain ---
 langchain-community>=0.2
+# --- LLM inference (served by Ollama, see docker-compose.yaml) ---
+langchain-core>=0.2
+langchain-ollama>=0.1

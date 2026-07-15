@@ -57,7 +57,7 @@ DEFAULT_START_DATE, DEFAULT_END_DATE = default_start_end_dates()
 
 
 KAFKA_BOOTSTRAP = get_env("KAFKA_BOOTSTRAP", "kafka:9092")
-KAFKA_TOPIC = get_env("KAFKA_TOPIC", "gdelt-events")
+KAFKA_TOPIC = get_env("KAFKA_TOPIC", "gdelt-events-raw")
 
 PRODUCER_MODE = get_env("PRODUCER_MODE", "replay").lower()
 PUBLISH_RATE = get_float_env("PUBLISH_RATE", 10.0)
