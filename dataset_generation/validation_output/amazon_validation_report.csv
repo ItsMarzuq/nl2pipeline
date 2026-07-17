@@ -1,0 +1,408 @@
+id,line_number,json_ok,syntax_ok,amazon_columns_ok,ruff_ok,passed,errors
+amazon_000001,1,True,True,True,True,True,
+amazon_000002,2,True,True,True,True,True,
+amazon_000003,3,True,True,True,True,True,
+amazon_000004,4,True,True,True,True,True,
+amazon_000005,5,True,True,True,True,True,
+amazon_000006,6,True,True,True,True,True,
+amazon_000007,7,True,True,True,True,True,
+amazon_000008,8,False,False,False,False,False,Duplicate user prompt
+amazon_000009,9,True,True,True,True,True,
+amazon_000010,10,True,True,True,True,True,
+amazon_000011,11,True,True,True,True,True,
+amazon_000012,12,True,True,True,True,True,
+amazon_000013,13,True,True,True,True,True,
+amazon_000014,14,True,True,True,True,True,
+amazon_000015,15,True,True,True,True,True,
+amazon_000016,16,True,True,True,True,True,
+amazon_000017,17,True,True,True,True,True,
+amazon_000018,18,True,True,True,True,True,
+amazon_000019,19,True,True,True,True,True,
+amazon_000020,20,False,False,False,False,False,Duplicate user prompt
+amazon_000021,21,True,True,True,True,True,
+amazon_000022,22,True,True,True,True,True,
+amazon_000023,23,True,True,True,True,True,
+amazon_000024,24,True,True,True,True,True,
+amazon_000025,25,True,True,True,True,True,
+amazon_000026,26,True,True,True,True,True,
+amazon_000027,27,True,True,True,True,True,
+amazon_000028,28,True,True,True,True,True,
+amazon_000029,29,True,True,True,True,True,
+amazon_000030,30,False,False,False,False,False,Duplicate user prompt
+amazon_000031,31,True,True,True,True,True,
+amazon_000032,32,True,True,True,True,True,
+amazon_000033,33,True,True,True,True,True,
+amazon_000034,34,True,True,True,True,True,
+amazon_000035,35,True,True,True,True,True,
+amazon_000036,36,True,True,True,True,True,
+amazon_000037,37,True,True,True,True,True,
+amazon_000038,38,True,True,True,True,True,
+amazon_000039,39,True,True,True,True,True,
+amazon_000040,40,True,True,True,True,True,
+amazon_000041,41,True,True,True,True,True,
+amazon_000042,42,True,True,True,True,True,
+amazon_000043,43,True,True,True,True,True,
+amazon_000044,44,True,True,True,True,True,
+amazon_000045,45,True,True,True,True,True,
+amazon_000046,46,False,False,False,False,False,Duplicate user prompt
+amazon_000047,47,True,True,True,False,False,"Ruff: C:\Users\Admin\AppData\Local\Temp\tmpqsb9a8so\candidate.py:3:100: W605 [*] Invalid escape sequence: `\s`
+Found 1 error.
+[*] 1 fixable with the `--fix` option."
+amazon_000048,48,True,True,True,True,True,
+amazon_000049,49,True,True,True,True,True,
+amazon_000050,50,True,True,True,True,True,
+amazon_000051,51,True,True,True,True,True,
+amazon_000052,52,True,True,True,True,True,
+amazon_000053,53,True,True,True,True,True,
+amazon_000054,54,True,True,True,True,True,
+amazon_000055,55,True,True,True,True,True,
+amazon_000056,56,True,True,True,True,True,
+amazon_000057,57,True,True,True,True,True,
+amazon_000058,58,True,True,True,True,True,
+amazon_000059,59,True,True,True,True,True,
+amazon_000060,60,True,True,True,True,True,
+amazon_000061,61,False,False,False,False,False,Duplicate user prompt
+amazon_000062,62,True,True,True,True,True,
+amazon_000063,63,True,True,True,True,True,
+amazon_000064,64,True,True,True,True,True,
+amazon_000065,65,True,True,True,True,True,
+amazon_000066,66,True,True,True,True,True,
+amazon_000067,67,True,True,True,True,True,
+amazon_000068,68,True,True,True,True,True,
+amazon_000069,69,True,True,True,True,True,
+amazon_000070,70,True,True,True,True,True,
+amazon_000071,71,False,False,False,False,False,Duplicate user prompt
+amazon_000072,72,True,True,True,True,True,
+amazon_000073,73,True,True,True,True,True,
+amazon_000074,74,True,True,True,True,True,
+amazon_000075,75,True,True,True,True,True,
+amazon_000076,76,True,True,True,True,True,
+amazon_000077,77,False,False,False,False,False,Duplicate user prompt
+amazon_000078,78,True,True,True,True,True,
+amazon_000079,79,True,True,True,True,True,
+amazon_000080,80,True,True,True,True,True,
+amazon_000081,81,True,True,True,True,True,
+amazon_000082,82,False,False,False,False,False,Duplicate user prompt
+amazon_000083,83,True,True,True,True,True,
+amazon_000084,84,True,True,True,True,True,
+amazon_000085,85,True,True,True,True,True,
+amazon_000086,86,True,True,True,False,False,"Ruff: C:\Users\Admin\AppData\Local\Temp\tmp7zq3w1xb\candidate.py:7:1: F821 Undefined name `esult`
+Found 1 error."
+amazon_000087,87,True,True,True,True,True,
+amazon_000088,88,True,True,True,True,True,
+amazon_000089,89,True,True,True,True,True,
+amazon_000090,90,True,True,True,True,True,
+amazon_000091,91,False,False,False,False,False,Duplicate user prompt
+amazon_000092,92,True,True,True,True,True,
+amazon_000093,93,True,True,True,True,True,
+amazon_000094,94,True,True,True,True,True,
+amazon_000095,95,True,True,True,True,True,
+amazon_000096,96,True,True,True,True,True,
+amazon_000097,97,True,True,True,True,True,
+amazon_000098,98,True,True,True,True,True,
+amazon_000099,99,True,True,True,True,True,
+amazon_000100,100,True,True,True,True,True,
+amazon_000101,101,False,False,False,False,False,Duplicate user prompt
+amazon_000102,102,False,False,False,False,False,Duplicate user prompt
+amazon_000103,103,True,True,True,True,True,
+amazon_000104,104,True,True,True,True,True,
+amazon_000105,105,True,True,True,True,True,
+amazon_000106,106,False,False,False,False,False,Duplicate user prompt
+amazon_000107,107,True,True,True,True,True,
+amazon_000108,108,False,False,False,False,False,Duplicate user prompt
+amazon_000109,109,True,True,True,True,True,
+amazon_000110,110,True,True,True,True,True,
+amazon_000111,111,True,True,True,True,True,
+amazon_000112,112,True,True,True,True,True,
+amazon_000113,113,True,True,True,True,True,
+amazon_000114,114,False,False,False,False,False,Duplicate user prompt
+amazon_000115,115,True,True,True,True,True,
+amazon_000116,116,False,False,False,False,False,Duplicate user prompt
+amazon_000117,117,True,True,True,True,True,
+amazon_000118,118,False,False,False,False,False,Duplicate user prompt
+amazon_000119,119,True,True,True,True,True,
+amazon_000120,120,True,True,False,True,False,Invalid or invented Amazon columns used: ['count']
+amazon_000121,121,True,True,False,True,False,Invalid or invented Amazon columns used: ['count']
+amazon_000122,122,True,True,True,True,True,
+amazon_000123,123,True,True,True,True,True,
+amazon_000124,124,True,True,True,True,True,
+amazon_000125,125,False,False,False,False,False,Duplicate user prompt
+amazon_000126,126,False,False,False,False,False,Duplicate user prompt
+amazon_000127,127,True,True,True,True,True,
+amazon_000128,128,True,True,True,True,True,
+amazon_000129,129,True,True,True,True,True,
+amazon_000130,130,True,True,True,True,True,
+amazon_000131,131,True,True,True,True,True,
+amazon_000132,132,False,False,False,False,False,Duplicate user prompt
+amazon_000133,133,False,False,False,False,False,Duplicate user prompt
+amazon_000134,134,False,False,False,False,False,Duplicate user prompt
+amazon_000135,135,True,True,True,True,True,
+amazon_000136,136,True,True,True,True,True,
+amazon_000137,137,True,True,True,True,True,
+amazon_000138,138,True,True,True,True,True,
+amazon_000139,139,True,True,True,True,True,
+amazon_000140,140,False,False,False,False,False,Duplicate user prompt
+amazon_000141,141,True,True,True,True,True,
+amazon_000142,142,False,False,False,False,False,Duplicate user prompt
+amazon_000143,143,False,False,False,False,False,Duplicate user prompt
+amazon_000144,144,True,True,True,True,True,
+amazon_000145,145,False,False,False,False,False,Duplicate user prompt
+amazon_000146,146,True,True,True,True,True,
+amazon_000147,147,False,False,False,False,False,Duplicate user prompt
+amazon_000148,148,True,True,True,True,True,
+amazon_000149,149,False,False,False,False,False,Duplicate user prompt
+amazon_000150,150,False,False,False,False,False,Duplicate user prompt
+amazon_000151,151,True,True,True,True,True,
+amazon_000152,152,True,True,True,True,True,
+amazon_000153,153,True,True,True,True,True,
+amazon_000154,154,True,True,True,True,True,
+amazon_000155,155,True,True,True,True,True,
+amazon_000156,156,True,True,True,True,True,
+amazon_000157,157,True,True,True,True,True,
+amazon_000158,158,True,True,True,True,True,
+amazon_000159,159,True,True,True,True,True,
+amazon_000160,160,False,False,False,False,False,Duplicate user prompt
+amazon_000161,161,True,True,True,True,True,
+amazon_000162,162,True,True,True,True,True,
+amazon_000163,163,True,True,True,True,True,
+amazon_000164,164,False,False,False,False,False,Duplicate user prompt
+amazon_000165,165,True,True,True,True,True,
+amazon_000166,166,False,False,False,False,False,Duplicate user prompt
+amazon_000167,167,True,True,True,True,True,
+amazon_000168,168,True,True,True,True,True,
+amazon_000169,169,True,True,True,True,True,
+amazon_000170,170,True,True,True,True,True,
+amazon_000171,171,False,False,False,False,False,Duplicate user prompt
+amazon_000172,172,False,False,False,False,False,Duplicate user prompt
+amazon_000173,173,False,False,False,False,False,Duplicate user prompt
+amazon_000174,174,True,True,True,True,True,
+amazon_000175,175,False,False,False,False,False,Duplicate user prompt
+amazon_000176,176,True,True,True,True,True,
+amazon_000177,177,True,True,True,True,True,
+amazon_000178,178,False,False,False,False,False,Duplicate user prompt
+amazon_000179,179,False,False,False,False,False,Duplicate user prompt
+amazon_000180,180,True,True,True,True,True,
+amazon_000181,181,True,True,True,False,False,"Ruff: C:\Users\Admin\AppData\Local\Temp\tmp0vtg86n6\candidate.py:3:100: W605 [*] Invalid escape sequence: `\s`
+Found 1 error.
+[*] 1 fixable with the `--fix` option."
+amazon_000182,182,False,False,False,False,False,Duplicate user prompt
+amazon_000183,183,True,True,True,True,True,
+amazon_000184,184,False,False,False,False,False,Duplicate user prompt
+amazon_000185,185,False,False,False,False,False,Duplicate user prompt
+amazon_000186,186,True,True,True,True,True,
+amazon_000187,187,True,True,True,True,True,
+amazon_000188,188,True,True,True,True,True,
+amazon_000189,189,True,True,True,True,True,
+amazon_000190,190,True,True,True,True,True,
+amazon_000191,191,True,True,True,True,True,
+amazon_000192,192,True,True,True,True,True,
+amazon_000193,193,True,True,True,True,True,
+amazon_000194,194,False,False,False,False,False,Duplicate user prompt
+amazon_000195,195,True,True,True,True,True,
+amazon_000196,196,True,True,True,True,True,
+amazon_000197,197,True,True,True,True,True,
+amazon_000198,198,True,True,True,True,True,
+amazon_000199,199,True,True,True,True,True,
+amazon_000200,200,True,True,True,True,True,
+amazon_000201,201,False,False,False,False,False,Duplicate user prompt
+amazon_000202,202,True,True,True,True,True,
+amazon_000203,203,True,True,True,True,True,
+amazon_000204,204,True,True,True,True,True,
+amazon_000205,205,True,True,True,True,True,
+amazon_000206,206,True,True,True,True,True,
+amazon_000207,207,True,True,True,True,True,
+amazon_000208,208,True,True,True,True,True,
+amazon_000209,209,False,False,False,False,False,Duplicate user prompt
+amazon_000210,210,True,True,True,True,True,
+amazon_000211,211,False,False,False,False,False,Duplicate user prompt
+amazon_000212,212,False,False,False,False,False,Duplicate user prompt
+amazon_000213,213,True,True,True,True,True,
+amazon_000214,214,True,True,True,True,True,
+amazon_000215,215,True,True,True,True,True,
+amazon_000216,216,True,True,True,True,True,
+amazon_000217,217,True,True,True,True,True,
+amazon_000218,218,True,True,True,True,True,
+amazon_000219,219,True,True,True,True,True,
+amazon_000220,220,True,True,True,True,True,
+amazon_000221,221,True,True,True,True,True,
+amazon_000222,222,True,True,True,True,True,
+amazon_000223,223,True,True,True,True,True,
+amazon_000224,224,True,True,True,True,True,
+amazon_000225,225,True,True,True,True,True,
+amazon_000226,226,True,True,True,True,True,
+amazon_000227,227,True,True,True,True,True,
+amazon_000228,228,True,True,True,True,True,
+amazon_000229,229,True,True,True,True,True,
+amazon_000230,230,False,False,False,False,False,Duplicate user prompt
+amazon_000231,231,True,True,True,True,True,
+amazon_000232,232,True,True,True,True,True,
+amazon_000233,233,True,True,True,True,True,
+amazon_000234,234,True,True,True,True,True,
+amazon_000235,235,True,True,True,True,True,
+amazon_000236,236,True,True,True,True,True,
+amazon_000237,237,False,False,False,False,False,Duplicate user prompt
+amazon_000238,238,False,False,False,False,False,Duplicate user prompt
+amazon_000239,239,True,True,True,True,True,
+amazon_000240,240,True,True,True,True,True,
+amazon_000241,241,True,True,True,True,True,
+amazon_000242,242,False,False,False,False,False,Duplicate user prompt
+amazon_000243,243,True,True,True,True,True,
+amazon_000244,244,True,True,True,True,True,
+amazon_000245,245,True,True,True,True,True,
+amazon_000246,246,True,True,True,True,True,
+amazon_000247,247,True,True,True,True,True,
+amazon_000248,248,True,True,True,True,True,
+amazon_000249,249,True,True,True,True,True,
+amazon_000250,250,False,False,False,False,False,Duplicate user prompt
+amazon_000251,251,True,True,True,True,True,
+amazon_000252,252,True,True,True,True,True,
+amazon_000253,253,True,True,True,True,True,
+amazon_000254,254,True,True,True,True,True,
+amazon_000255,255,True,True,True,True,True,
+amazon_000256,256,True,True,True,True,True,
+amazon_000257,257,False,False,False,False,False,Duplicate user prompt
+amazon_000258,258,False,False,False,False,False,Duplicate user prompt
+amazon_000259,259,True,True,True,True,True,
+amazon_000260,260,True,True,True,True,True,
+amazon_000261,261,False,False,False,False,False,Duplicate user prompt
+amazon_000262,262,True,True,True,True,True,
+amazon_000263,263,False,False,False,False,False,Duplicate user prompt
+amazon_000264,264,True,True,True,True,True,
+amazon_000265,265,True,True,True,True,True,
+amazon_000266,266,True,True,True,True,True,
+amazon_000267,267,False,False,False,False,False,Duplicate user prompt
+amazon_000268,268,True,True,True,True,True,
+amazon_000269,269,True,True,True,True,True,
+amazon_000270,270,True,True,True,True,True,
+amazon_000271,271,True,True,True,True,True,
+amazon_000272,272,True,True,True,True,True,
+amazon_000273,273,False,False,False,False,False,Duplicate user prompt
+amazon_000274,274,True,True,True,True,True,
+amazon_000275,275,True,True,True,True,True,
+amazon_000276,276,False,False,False,False,False,Duplicate user prompt
+amazon_000277,277,True,True,True,True,True,
+amazon_000278,278,True,True,True,True,True,
+amazon_000279,279,False,False,False,False,False,Duplicate user prompt
+amazon_000280,280,False,False,False,False,False,Duplicate user prompt
+amazon_000281,281,False,False,False,False,False,Duplicate user prompt
+amazon_000282,282,False,False,False,False,False,Duplicate user prompt
+amazon_000283,283,True,True,True,True,True,
+amazon_000284,284,False,False,False,False,False,Duplicate user prompt
+amazon_000285,285,True,True,True,True,True,
+amazon_000286,286,True,True,True,True,True,
+amazon_000287,287,True,True,True,True,True,
+amazon_000288,288,False,False,False,False,False,Duplicate user prompt
+amazon_000289,289,False,False,False,False,False,Duplicate user prompt
+amazon_000290,290,True,True,True,True,True,
+amazon_000291,291,True,True,True,True,True,
+amazon_000292,292,True,True,True,True,True,
+amazon_000293,293,True,True,True,True,True,
+amazon_000294,294,False,False,False,False,False,Duplicate user prompt
+amazon_000295,295,False,False,False,False,False,Duplicate user prompt
+amazon_000296,296,True,True,True,True,True,
+amazon_000297,297,True,True,True,True,True,
+amazon_000298,298,True,True,True,True,True,
+amazon_000299,299,True,True,True,True,True,
+amazon_000300,300,True,True,True,True,True,
+amazon_000301,301,True,True,False,True,False,Invalid or invented Amazon columns used: ['count']
+amazon_000302,302,True,True,True,True,True,
+amazon_000303,303,True,True,True,True,True,
+amazon_000304,304,True,True,True,True,True,
+amazon_000305,305,False,False,False,False,False,Duplicate user prompt
+amazon_000306,306,False,False,False,False,False,Duplicate user prompt
+amazon_000307,307,True,True,True,True,True,
+amazon_000308,308,True,True,True,True,True,
+amazon_000309,309,True,True,True,True,True,
+amazon_000310,310,True,True,True,True,True,
+amazon_000311,311,True,True,True,True,True,
+amazon_000312,312,True,True,True,True,True,
+amazon_000313,313,True,True,True,True,True,
+amazon_000314,314,True,True,True,True,True,
+amazon_000315,315,False,False,False,False,False,Duplicate user prompt
+amazon_000316,316,True,True,True,True,True,
+amazon_000317,317,False,False,False,False,False,Duplicate user prompt
+amazon_000318,318,True,True,True,True,True,
+amazon_000319,319,True,True,True,True,True,
+amazon_000320,320,True,True,True,True,True,
+amazon_000321,321,True,True,True,True,True,
+amazon_000322,322,True,True,True,True,True,
+amazon_000323,323,False,False,False,False,False,Duplicate user prompt
+amazon_000324,324,False,False,False,False,False,Duplicate user prompt
+amazon_000325,325,True,True,True,True,True,
+amazon_000326,326,True,True,True,True,True,
+amazon_000327,327,True,True,True,True,True,
+amazon_000328,328,True,True,True,True,True,
+amazon_000329,329,False,False,False,False,False,Duplicate user prompt
+amazon_000330,330,True,True,True,True,True,
+amazon_000331,331,False,False,False,False,False,Duplicate user prompt
+amazon_000332,332,True,True,True,True,True,
+amazon_000333,333,False,False,False,False,False,Duplicate user prompt
+amazon_000334,334,True,True,True,True,True,
+amazon_000335,335,False,False,False,False,False,Duplicate user prompt
+amazon_000336,336,True,True,True,True,True,
+amazon_000337,337,False,False,False,False,False,Duplicate user prompt
+amazon_000338,338,True,True,True,True,True,
+amazon_000339,339,True,True,True,True,True,
+amazon_000340,340,True,True,True,True,True,
+amazon_000341,341,True,True,True,True,True,
+amazon_000342,342,True,True,True,True,True,
+amazon_000343,343,False,False,False,False,False,Duplicate user prompt
+amazon_000344,344,False,False,False,False,False,Duplicate user prompt
+amazon_000345,345,True,True,True,True,True,
+amazon_000346,346,False,False,False,False,False,Duplicate user prompt
+amazon_000347,347,False,False,False,False,False,Duplicate user prompt
+amazon_000348,348,False,False,False,False,False,Duplicate user prompt
+amazon_000349,349,True,True,True,True,True,
+amazon_000350,350,False,False,False,False,False,Duplicate user prompt
+amazon_000351,351,True,True,True,True,True,
+amazon_000352,352,True,True,True,True,True,
+amazon_000353,353,True,True,True,True,True,
+amazon_000354,354,True,True,True,True,True,
+amazon_000355,355,True,True,True,True,True,
+amazon_000356,356,True,True,True,True,True,
+amazon_000357,357,False,False,False,False,False,Duplicate user prompt
+amazon_000358,358,True,True,True,True,True,
+amazon_000359,359,True,True,True,True,True,
+amazon_000360,360,True,True,True,False,False,"Ruff: C:\Users\Admin\AppData\Local\Temp\tmp821yrioj\candidate.py:6:5: F821 Undefined name `count`
+Found 1 error."
+amazon_000361,361,False,False,False,False,False,Duplicate user prompt
+amazon_000362,362,False,False,False,False,False,Duplicate user prompt
+amazon_000363,363,True,True,True,True,True,
+amazon_000364,364,True,True,True,True,True,
+amazon_000365,365,True,True,True,True,True,
+amazon_000366,366,True,True,True,True,True,
+amazon_000367,367,True,True,True,True,True,
+amazon_000368,368,True,True,True,True,True,
+amazon_000369,369,True,True,True,True,True,
+amazon_000370,370,False,False,False,False,False,Duplicate user prompt
+amazon_000371,371,True,True,True,False,False,"Ruff: C:\Users\Admin\AppData\Local\Temp\tmp8uch8gpy\candidate.py:6:5: F821 Undefined name `reduce`
+Found 1 error."
+amazon_000372,372,True,True,True,True,True,
+amazon_000373,373,True,True,True,True,True,
+amazon_000374,374,True,True,True,True,True,
+amazon_000375,375,True,True,True,True,True,
+amazon_000376,376,True,True,True,True,True,
+amazon_000377,377,True,True,True,True,True,
+amazon_000378,378,True,True,True,True,True,
+amazon_000379,379,True,True,True,True,True,
+amazon_000380,380,True,True,True,True,True,
+amazon_000381,381,True,True,True,True,True,
+amazon_000382,382,True,True,True,True,True,
+amazon_000383,383,True,True,True,True,True,
+amazon_000384,384,True,True,True,True,True,
+amazon_000385,385,True,True,True,True,True,
+amazon_000386,386,False,False,False,False,False,Duplicate user prompt
+amazon_000387,387,True,True,True,True,True,
+amazon_000388,388,True,True,True,True,True,
+amazon_000389,389,True,True,True,True,True,
+amazon_000390,390,True,True,True,True,True,
+amazon_000391,391,True,True,True,True,True,
+amazon_000392,392,True,True,True,True,True,
+amazon_000393,393,True,True,True,True,True,
+amazon_000394,394,False,False,False,False,False,Duplicate user prompt
+amazon_000395,395,True,True,True,True,True,
+amazon_000396,396,False,False,False,False,False,Duplicate user prompt
+amazon_000397,397,True,True,True,True,True,
+amazon_000398,398,True,True,True,True,True,
+amazon_000399,399,True,True,True,True,True,
+amazon_000400,400,True,True,True,True,True,

@@ -15,15 +15,16 @@ from tqdm import tqdm
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 
-PAIRS_FILE = SCRIPT_DIR / "gdelt_pairs.jsonl"
-ENV_FILE = SCRIPT_DIR / "gdelt_environment.yaml"
+PAIRS_FILE = SCRIPT_DIR / "amazon_pairs.jsonl"
+ENV_FILE = SCRIPT_DIR / "amazon_environment.yaml"
+RUFF_CONFIG = SCRIPT_DIR / "ruff.toml"
 
 OUTPUT_DIR = SCRIPT_DIR / "validation_output"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-REPORT_FILE = OUTPUT_DIR / "validation_report.csv"
-VALID_FILE = OUTPUT_DIR / "gdelt_valid_pairs.jsonl"
-FAILED_FILE = OUTPUT_DIR / "gdelt_failed_pairs.jsonl"
+REPORT_FILE = OUTPUT_DIR / "amazon_validation_report.csv"
+VALID_FILE = OUTPUT_DIR / "amazon_valid_pairs.jsonl"
+FAILED_FILE = OUTPUT_DIR / "amazon_failed_pairs.jsonl"
 
 REQUIRED_FIELDS = [
     "id",
@@ -37,7 +38,7 @@ REQUIRED_FIELDS = [
 VALID_CATEGORIES = {
     "filtering",
     "aggregation",
-    "trend_analysis",
+    "sentiment_analysis",
     "data_quality",
     "spark_to_parquet",
     "spark_to_cassandra",
@@ -59,27 +60,29 @@ def load_allowed_columns() -> List[str]:
     with open(ENV_FILE, "r", encoding="utf-8") as file:
         environment_data = yaml.safe_load(file) or {}
 
-    if "input_data" in environment_data:
+    if "environment" in environment_data:
         allowed_columns = (
-            environment_data.get("input_data", {}).get("columns", [])
+            environment_data
+            .get("environment", {})
+            .get("available_columns", [])
         )
-    elif "environment" in environment_data:
+
+    elif "input_data" in environment_data:
         allowed_columns = (
-            environment_data.get("environment", {}).get(
-                "available_columns",
-                [],
-            )
+            environment_data
+            .get("input_data", {})
+            .get("columns", [])
         )
+
     else:
         raise ValueError(
-            "gdelt_environment.yaml must contain either "
-            "'input_data' or 'environment'."
+            "amazon_environment.yaml must contain either "
+            "'environment' or 'input_data'."
         )
 
     if not isinstance(allowed_columns, list):
         raise ValueError(
-            "The allowed columns value in gdelt_environment.yaml "
-            "must be a list."
+            "The available columns value must be a list."
         )
 
     cleaned_columns = [
@@ -90,10 +93,31 @@ def load_allowed_columns() -> List[str]:
 
     if not cleaned_columns:
         raise ValueError(
-            "No allowed columns were found in gdelt_environment.yaml"
+            "No allowed columns were found in amazon_environment.yaml"
         )
 
     return cleaned_columns
+
+
+def load_expected_input_path() -> str:
+    with open(ENV_FILE, "r", encoding="utf-8") as file:
+        environment_data = yaml.safe_load(file) or {}
+
+    if "environment" in environment_data:
+        return str(
+            environment_data
+            .get("environment", {})
+            .get("input_path", "")
+        ).strip()
+
+    if "input_data" in environment_data:
+        return str(
+            environment_data
+            .get("input_data", {})
+            .get("path", "")
+        ).strip()
+
+    return ""
 
 
 def load_jsonl(path: Path) -> List[Dict]:
@@ -147,8 +171,10 @@ def clean_code(code: str) -> str:
 
     if code.startswith("```python"):
         code = code[len("```python"):].strip()
+
     elif code.startswith("```py"):
         code = code[len("```py"):].strip()
+
     elif code.startswith("```"):
         code = code[len("```"):].strip()
 
@@ -162,6 +188,7 @@ def validate_json_schema(
     record: Dict,
     seen_ids: Set[str],
     seen_prompts: Set[str],
+    expected_input_path: str,
 ) -> Tuple[bool, List[str]]:
     errors = []
 
@@ -186,6 +213,7 @@ def validate_json_schema(
 
     if not isinstance(pair_id, str) or not pair_id.strip():
         errors.append("id must be a non-empty string")
+
     else:
         pair_id = pair_id.strip()
 
@@ -194,24 +222,27 @@ def validate_json_schema(
         else:
             seen_ids.add(pair_id)
 
-        if not pair_id.startswith("gdelt_"):
-            errors.append("id must start with 'gdelt_'")
+        if not pair_id.startswith("amazon_"):
+            errors.append("id must start with 'amazon_'")
 
     if not isinstance(category, str):
         errors.append("category must be a string")
+
     elif category not in VALID_CATEGORIES:
         errors.append(f"Unknown category: {category}")
 
     if not isinstance(difficulty, str):
         errors.append("difficulty must be a string")
+
     elif difficulty not in VALID_DIFFICULTIES:
         errors.append(f"Unknown difficulty: {difficulty}")
 
-    if source_dataset != "gdelt":
-        errors.append("source_dataset must be 'gdelt'")
+    if source_dataset != "amazon":
+        errors.append("source_dataset must be 'amazon'")
 
     if not isinstance(user_prompt, str):
         errors.append("user must be a string")
+
     else:
         stripped_prompt = user_prompt.strip()
 
@@ -230,7 +261,8 @@ def validate_json_schema(
 
     if not isinstance(assistant_code, str):
         errors.append("assistant must be a string")
-    elif len(assistant_code.strip()) < 50:
+
+    elif len(assistant_code.strip()) < 30:
         errors.append("Assistant code is too short")
 
     metadata = record.get("metadata")
@@ -238,7 +270,20 @@ def validate_json_schema(
     if metadata is not None:
         if not isinstance(metadata, dict):
             errors.append("metadata must be a JSON object")
+
         else:
+            metadata_path = metadata.get("input_path")
+
+            if (
+                expected_input_path
+                and metadata_path is not None
+                and metadata_path != expected_input_path
+            ):
+                errors.append(
+                    "metadata.input_path does not match "
+                    "amazon_environment.yaml"
+                )
+
             processing_engine = metadata.get("processing_engine")
 
             if processing_engine not in {
@@ -387,6 +432,7 @@ def extract_referenced_columns(
                     referenced_columns.update(
                         extract_string_values(node.args[0])
                     )
+
                     defined_columns.update(
                         extract_string_values(node.args[1])
                     )
@@ -435,7 +481,7 @@ def extract_referenced_columns(
     return referenced_columns, defined_columns
 
 
-def validate_gdelt_columns(
+def validate_amazon_columns(
     code: str,
     allowed_columns: List[str],
 ) -> Tuple[bool, List[str]]:
@@ -455,7 +501,7 @@ def validate_gdelt_columns(
 
     if invalid_columns:
         errors.append(
-            "Invalid or invented GDELT columns used: "
+            "Invalid or invented Amazon columns used: "
             f"{invalid_columns}"
         )
 
@@ -515,9 +561,8 @@ def run_ruff(
         command = [
             *ruff_command,
             "check",
-            "--isolated",
-            "--select",
-            "E4,E7,E9,F,W605",
+            "--config",
+            str(RUFF_CONFIG),
             "--output-format",
             "concise",
             str(script_path),
@@ -583,7 +628,7 @@ def write_validation_report(
         "line_number",
         "json_ok",
         "syntax_ok",
-        "gdelt_columns_ok",
+        "amazon_columns_ok",
         "ruff_ok",
         "passed",
         "errors",
@@ -606,23 +651,29 @@ def write_validation_report(
 
 def main() -> None:
     print("=" * 70)
-    print("GDELT JSONL DATASET VALIDATOR")
+    print("AMAZON JSONL DATASET VALIDATOR")
     print("=" * 70)
 
+    if not RUFF_CONFIG.exists():
+        raise FileNotFoundError(
+            f"Missing Ruff configuration file: {RUFF_CONFIG}"
+        )
+
     allowed_columns = load_allowed_columns()
+    expected_input_path = load_expected_input_path()
     records = load_jsonl(PAIRS_FILE)
     ruff_command = find_ruff_command()
 
     if ruff_command is None:
         raise RuntimeError(
-            "Ruff is required but could not be found. "
-            "Run 'ruff --version' and ensure Ruff is available in PATH."
+            "Ruff is required but could not be found in PATH."
         )
 
     print(f"\nPairs file: {PAIRS_FILE}")
     print(f"Environment file: {ENV_FILE}")
     print(f"Loaded pairs: {len(records)}")
-    print(f"Allowed GDELT columns: {len(allowed_columns)}")
+    print(f"Allowed Amazon columns: {len(allowed_columns)}")
+    print(f"Expected input path: {expected_input_path}")
     print(f"Ruff command: {' '.join(ruff_command)}")
 
     seen_ids: Set[str] = set()
@@ -647,12 +698,13 @@ def main() -> None:
             record=record,
             seen_ids=seen_ids,
             seen_prompts=seen_prompts,
+            expected_input_path=expected_input_path,
         )
 
         all_errors.extend(json_errors)
 
         syntax_ok = False
-        gdelt_columns_ok = False
+        amazon_columns_ok = False
         ruff_ok = False
 
         if json_ok:
@@ -670,14 +722,14 @@ def main() -> None:
 
             if syntax_ok:
                 (
-                    gdelt_columns_ok,
-                    gdelt_errors,
-                ) = validate_gdelt_columns(
+                    amazon_columns_ok,
+                    amazon_errors,
+                ) = validate_amazon_columns(
                     code=code,
                     allowed_columns=allowed_columns,
                 )
 
-                all_errors.extend(gdelt_errors)
+                all_errors.extend(amazon_errors)
 
                 ruff_ok, ruff_errors = run_ruff(
                     code=code,
@@ -692,7 +744,7 @@ def main() -> None:
         passed = (
             json_ok
             and syntax_ok
-            and gdelt_columns_ok
+            and amazon_columns_ok
             and ruff_ok
         )
 
@@ -705,7 +757,7 @@ def main() -> None:
                 ),
                 "json_ok": json_ok,
                 "syntax_ok": syntax_ok,
-                "gdelt_columns_ok": gdelt_columns_ok,
+                "amazon_columns_ok": amazon_columns_ok,
                 "ruff_ok": ruff_ok,
                 "passed": passed,
                 "errors": " | ".join(all_errors),
@@ -714,6 +766,7 @@ def main() -> None:
 
         if passed:
             valid_records.append(record)
+
         else:
             failed_record = dict(record)
             failed_record["validation_errors"] = all_errors
@@ -745,14 +798,15 @@ def main() -> None:
     if len(valid_records) >= 250:
         print(
             "\nTarget reached: at least 250 valid "
-            "GDELT pairs are available."
+            "Amazon pairs are available."
         )
+
     else:
         remaining = 250 - len(valid_records)
 
         print(
             f"\nTarget not reached. You need at least "
-            f"{remaining} more valid GDELT pairs."
+            f"{remaining} more valid Amazon pairs."
         )
 
 

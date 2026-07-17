@@ -1,0 +1,1 @@
+FROM /models/nl2pipeline-qwen35-4b-q4_k_m.gguf

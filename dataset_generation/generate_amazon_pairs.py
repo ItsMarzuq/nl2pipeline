@@ -183,7 +183,7 @@ def append_jsonl(record: dict, path: Path) -> None:
 
 
 def main():
-    target_pairs = 200
+    target_pairs = 400
 
     environment_text = load_environment_text()
 

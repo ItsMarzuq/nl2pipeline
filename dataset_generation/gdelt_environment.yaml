@@ -5,12 +5,14 @@ input_data:
   name: gdelt_events
   type: csv
   path: data/gdelt/gdelt_events_sample.csv
-  description: Real GDELT 2.0 Events data downloaded from recent event export files.
+  description: GDELT event records used for NL2Pipeline training.
   columns:
     - global_event_id
     - event_date
     - actor1_country
     - actor2_country
+    - actor1_type1
+    - actor2_type1
     - event_code
     - event_base_code
     - event_root_code
@@ -34,8 +36,10 @@ processing:
 allowed_outputs:
   local_parquet:
     path: outputs/gdelt/
+
   local_csv:
     path: outputs/gdelt_csv/
+
   cassandra:
     keyspace: nl2pipeline
     tables:
@@ -43,14 +47,17 @@ allowed_outputs:
         columns:
           country: text
           event_count: int
+
       gdelt_daily_counts:
         columns:
           event_date: text
           event_count: int
+
       gdelt_tone_summary:
         columns:
           country: text
           avg_tone: float
+
       gdelt_event_code_summary:
         columns:
           event_code: text

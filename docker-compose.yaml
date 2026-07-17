@@ -8,7 +8,7 @@ services:
     volumes:
       - zookeeper-data:/var/lib/zookeeper/data
     healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "${ZOOKEEPER_CLIENT_PORT}"]
+      test: [ "CMD", "nc", "-z", "localhost", "${ZOOKEEPER_CLIENT_PORT}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -33,7 +33,7 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: ${KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR}
     healthcheck:
-      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "${KAFKA_HOST}"]
+      test: [ "CMD", "kafka-broker-api-versions", "--bootstrap-server", "${KAFKA_HOST}" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -50,7 +50,7 @@ services:
     volumes:
       - cassandra-data:/var/lib/cassandra
     healthcheck:
-      test: ["CMD", "cqlsh", "-e", "describe keyspaces"]
+      test: [ "CMD", "cqlsh", "-e", "describe keyspaces" ]
       interval: 30s
       timeout: 10s
       retries: 10
@@ -74,7 +74,7 @@ services:
       - nl2pipeline-net
 
   spark-worker:
-    image: apache/spark:latest 
+    image: apache/spark:latest
     container_name: nl2pipeline-spark-worker
     depends_on:
       - spark
@@ -85,7 +85,7 @@ services:
       - SPARK_WORKER_MEMORY=${SPARK_WORKER_MEMORY}
       - SPARK_WORKER_CORES=${SPARK_WORKER_CORES}
     ports:
-      - "${SPARK_WORKER_WEBUI_PORT}:${SPARK_WORKER_WEBUI_PORT}" 
+      - "${SPARK_WORKER_WEBUI_PORT}:${SPARK_WORKER_WEBUI_PORT}"
     networks:
       - nl2pipeline-net
 
@@ -176,7 +176,7 @@ services:
     volumes:
       - ollama-data:/root/.ollama
     healthcheck:
-      test: ["CMD", "ollama", "list"]
+      test: [ "CMD", "ollama", "list" ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -190,24 +190,29 @@ services:
           devices:
             - driver: nvidia
               count: 1
-              capabilities: [gpu]
+              capabilities: [ gpu ]
 
   ollama-pull:
     image: ollama/ollama:latest
     container_name: nl2pipeline-ollama-pull
+    profiles:
+      - model-init
     depends_on:
       ollama:
         condition: service_healthy
     environment:
       - OLLAMA_HOST=http://ollama:11434
-    entrypoint: ["ollama"]
-    command: ["pull", "${OLLAMA_MODEL:-qwen3.5:4b}"]
+    entrypoint: [ "ollama" ]
+    command: [ "create", "${OLLAMA_MODEL:-nl2pipeline-ft}", "-f", "/Modelfile" ]
+    volumes:
+      - ./models:/models:ro
+      - ./Modelfile:/Modelfile:ro
     networks:
       - nl2pipeline-net
     restart: "no"
 
   backend:
-    platform: linux/arm64
+    platform: linux/amd64
     build:
       context: .
       dockerfile: backend/Dockerfile
@@ -217,8 +222,8 @@ services:
         condition: service_completed_successfully
       kafka-init:
         condition: service_completed_successfully
-      ollama-pull:
-        condition: service_completed_successfully
+      ollama:
+        condition: service_healthy
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     environment:

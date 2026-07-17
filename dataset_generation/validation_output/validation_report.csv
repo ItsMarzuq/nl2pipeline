@@ -1,5 +1,5 @@
 id,line_number,json_ok,syntax_ok,gdelt_columns_ok,ruff_ok,passed,errors
-gdelt_000001,1,True,True,True,True,True,
+gdelt_000001,1,True,True,False,True,False,Invalid or invented GDELT columns used: ['count']
 gdelt_000002,2,True,True,True,True,True,
 gdelt_000003,3,True,True,True,True,True,
 gdelt_000004,4,True,True,True,True,True,
@@ -7,14 +7,16 @@ gdelt_000005,5,True,True,True,True,True,
 gdelt_000006,6,True,True,True,True,True,
 gdelt_000007,7,True,True,True,True,True,
 gdelt_000008,8,True,True,True,True,True,
-gdelt_000009,9,True,True,True,True,True,
+gdelt_000009,9,True,True,True,False,False,"Ruff: C:\Users\Admin\AppData\Local\Temp\tmpr7wzyvry\candidate.py:2:47: F401 [*] `pyspark.sql.functions.sum` imported but unused
+Found 1 error.
+[*] 1 fixable with the `--fix` option."
 gdelt_000010,10,True,True,True,True,True,
 gdelt_000011,11,True,True,True,True,True,
 gdelt_000012,12,True,True,True,True,True,
 gdelt_000013,13,True,True,True,True,True,
 gdelt_000014,14,True,True,True,True,True,
 gdelt_000015,15,True,True,True,True,True,
-gdelt_000016,16,True,True,True,True,True,
+gdelt_000016,16,True,True,False,True,False,Invalid or invented GDELT columns used: ['count']
 gdelt_000017,17,True,True,True,True,True,
 gdelt_000018,18,True,True,True,True,True,
 gdelt_000019,19,True,True,True,True,True,
@@ -30,26 +32,26 @@ gdelt_000028,28,True,True,True,True,True,
 gdelt_000029,29,True,True,True,True,True,
 gdelt_000030,30,True,True,True,True,True,
 gdelt_000031,31,True,True,True,True,True,
-gdelt_000032,32,True,True,True,True,True,
+gdelt_000032,32,True,True,False,True,False,Invalid or invented GDELT columns used: ['count']
 gdelt_000033,33,True,True,True,True,True,
 gdelt_000034,34,True,True,True,True,True,
-gdelt_000035,35,True,True,True,True,True,
+gdelt_000035,35,True,True,False,True,False,Invalid or invented GDELT columns used: ['count']
 gdelt_000036,36,True,True,True,True,True,
-gdelt_000037,37,True,True,True,True,True,
+gdelt_000037,37,True,True,False,True,False,Invalid or invented GDELT columns used: ['count']
 gdelt_000038,38,True,True,True,True,True,
 gdelt_000039,39,True,True,True,True,True,
-gdelt_000040,40,True,True,False,True,False,Invalid or invented GDELT columns used: ['action_country']
+gdelt_000040,40,True,True,True,True,True,
 gdelt_000041,41,True,True,True,True,True,
 gdelt_000042,42,True,True,True,True,True,
 gdelt_000043,43,True,True,True,True,True,
 gdelt_000044,44,True,True,True,True,True,
-gdelt_000045,45,True,True,True,True,True,
+gdelt_000045,45,True,True,False,True,False,Invalid or invented GDELT columns used: ['count']
 gdelt_000046,46,True,True,True,True,True,
-gdelt_000047,47,True,True,True,True,True,
+gdelt_000047,47,True,True,False,True,False,Invalid or invented GDELT columns used: ['count']
 gdelt_000048,48,True,True,True,True,True,
 gdelt_000049,49,True,True,True,True,True,
 gdelt_000050,50,True,True,True,True,True,
-gdelt_000051,51,True,True,False,True,False,Invalid or invented GDELT columns used: ['action_country']
+gdelt_000051,51,True,True,True,True,True,
 gdelt_000052,52,True,True,True,True,True,
 gdelt_000053,53,True,True,True,True,True,
 gdelt_000054,54,True,True,True,True,True,
@@ -60,7 +62,7 @@ gdelt_000058,58,True,True,True,True,True,
 gdelt_000059,59,True,True,True,True,True,
 gdelt_000060,60,True,True,True,True,True,
 gdelt_000061,61,True,True,True,True,True,
-gdelt_000062,62,True,True,False,True,False,Invalid or invented GDELT columns used: ['event_code']
+gdelt_000062,62,True,True,True,True,True,
 gdelt_000063,63,True,True,True,True,True,
 gdelt_000064,64,True,True,True,True,True,
 gdelt_000065,65,True,True,True,True,True,
@@ -74,7 +76,7 @@ gdelt_000072,72,True,True,True,True,True,
 gdelt_000073,73,True,True,True,True,True,
 gdelt_000074,74,True,True,True,True,True,
 gdelt_000075,75,True,True,True,True,True,
-gdelt_000076,76,True,True,False,True,False,Invalid or invented GDELT columns used: ['action_country']
+gdelt_000076,76,True,True,True,True,True,
 gdelt_000077,77,True,True,True,True,True,
 gdelt_000078,78,True,True,True,True,True,
 gdelt_000079,79,True,True,True,True,True,
@@ -98,12 +100,14 @@ gdelt_000096,96,True,True,True,True,True,
 gdelt_000097,97,True,True,True,True,True,
 gdelt_000098,98,True,True,True,True,True,
 gdelt_000099,99,True,True,True,True,True,
-gdelt_000100,100,True,True,True,True,True,
+gdelt_000100,100,True,True,True,False,False,"Ruff: C:\Users\Admin\AppData\Local\Temp\tmpqmcq704t\candidate.py:2:40: F401 [*] `pyspark.sql.functions.count` imported but unused
+Found 1 error.
+[*] 1 fixable with the `--fix` option."
 gdelt_000101,101,True,True,True,True,True,
 gdelt_000102,102,True,True,True,True,True,
 gdelt_000103,103,True,True,True,True,True,
 gdelt_000104,104,True,True,True,True,True,
-gdelt_000105,105,True,True,False,True,False,Invalid or invented GDELT columns used: ['action_location']
+gdelt_000105,105,True,True,True,True,True,
 gdelt_000106,106,True,True,True,True,True,
 gdelt_000107,107,True,True,True,True,True,
 gdelt_000108,108,True,True,True,True,True,
@@ -113,14 +117,18 @@ gdelt_000111,111,True,True,True,True,True,
 gdelt_000112,112,False,False,False,False,False,Duplicate user prompt
 gdelt_000113,113,True,True,True,True,True,
 gdelt_000114,114,True,True,True,True,True,
-gdelt_000115,115,True,True,True,True,True,
+gdelt_000115,115,True,True,False,True,False,Invalid or invented GDELT columns used: ['count']
 gdelt_000116,116,True,True,True,True,True,
-gdelt_000117,117,True,True,True,True,True,
-gdelt_000118,118,True,True,True,True,True,
+gdelt_000117,117,True,True,True,False,False,"Ruff: C:\Users\Admin\AppData\Local\Temp\tmpj7sbotpi\candidate.py:2:40: F401 [*] `pyspark.sql.functions.count` imported but unused
+Found 1 error.
+[*] 1 fixable with the `--fix` option."
+gdelt_000118,118,True,True,False,True,False,Invalid or invented GDELT columns used: ['count']
 gdelt_000119,119,True,True,True,True,True,
 gdelt_000120,120,True,True,True,True,True,
 gdelt_000121,121,True,True,True,True,True,
-gdelt_000122,122,True,True,True,True,True,
+gdelt_000122,122,True,True,True,False,False,"Ruff: C:\Users\Admin\AppData\Local\Temp\tmplbga04lt\candidate.py:2:40: F401 [*] `pyspark.sql.functions.when` imported but unused
+Found 1 error.
+[*] 1 fixable with the `--fix` option."
 gdelt_000123,123,True,True,True,True,True,
 gdelt_000124,124,True,True,True,True,True,
 gdelt_000125,125,True,True,True,True,True,
@@ -128,18 +136,18 @@ gdelt_000126,126,True,True,True,True,True,
 gdelt_000127,127,True,True,True,True,True,
 gdelt_000128,128,True,True,True,True,True,
 gdelt_000129,129,True,True,True,True,True,
-gdelt_000130,130,True,True,True,True,True,
+gdelt_000130,130,True,True,False,True,False,Invalid or invented GDELT columns used: ['count']
 gdelt_000131,131,True,True,True,True,True,
 gdelt_000132,132,True,True,True,True,True,
 gdelt_000133,133,True,True,True,True,True,
 gdelt_000134,134,True,True,True,True,True,
-gdelt_000135,135,True,True,False,True,False,Invalid or invented GDELT columns used: ['action_country']
+gdelt_000135,135,True,True,True,True,True,
 gdelt_000136,136,False,False,False,False,False,Duplicate user prompt
 gdelt_000137,137,True,True,True,True,True,
 gdelt_000138,138,True,True,True,True,True,
 gdelt_000139,139,False,False,False,False,False,Duplicate user prompt
 gdelt_000140,140,True,True,True,True,True,
-gdelt_000141,141,True,True,True,True,True,
+gdelt_000141,141,True,True,False,True,False,Invalid or invented GDELT columns used: ['count']
 gdelt_000142,142,True,True,True,True,True,
 gdelt_000143,143,True,True,True,True,True,
 gdelt_000144,144,False,False,False,False,False,Duplicate user prompt
@@ -149,12 +157,17 @@ gdelt_000147,147,True,True,True,True,True,
 gdelt_000148,148,True,True,True,True,True,
 gdelt_000149,149,False,False,False,False,False,Duplicate user prompt
 gdelt_000150,150,True,True,True,True,True,
-gdelt_000151,151,True,True,True,True,True,
+gdelt_000151,151,True,True,True,False,False,"Ruff: C:\Users\Admin\AppData\Local\Temp\tmplogv_qcu\candidate.py:1:25: F401 [*] `pyspark.sql.SparkSession` imported but unused
+C:\Users\Admin\AppData\Local\Temp\tmplogv_qcu\candidate.py:3:6: F821 Undefined name `spark`
+Found 2 errors.
+[*] 1 fixable with the `--fix` option."
 gdelt_000152,152,True,True,True,True,True,
 gdelt_000153,153,True,True,True,True,True,
 gdelt_000154,154,True,True,True,True,True,
 gdelt_000155,155,True,True,True,True,True,
-gdelt_000156,156,True,True,True,True,True,
+gdelt_000156,156,True,True,True,False,False,"Ruff: C:\Users\Admin\AppData\Local\Temp\tmp6hqjqw8p\candidate.py:2:40: F401 [*] `pyspark.sql.functions.count` imported but unused
+Found 1 error.
+[*] 1 fixable with the `--fix` option."
 gdelt_000157,157,True,True,True,True,True,
 gdelt_000158,158,True,True,True,True,True,
 gdelt_000159,159,True,True,True,True,True,
@@ -163,10 +176,12 @@ gdelt_000161,161,False,False,False,False,False,Duplicate user prompt
 gdelt_000162,162,True,True,True,True,True,
 gdelt_000163,163,True,True,True,True,True,
 gdelt_000164,164,True,True,True,True,True,
-gdelt_000165,165,True,True,False,True,False,"Invalid or invented GDELT columns used: ['action_country', 'action_lat', 'action_location', 'action_long', 'event_base_code', 'event_code', 'goldstein_scale', 'num_articles', 'num_mentions', 'num_sources', 'source_url']"
+gdelt_000165,165,True,True,True,True,True,
 gdelt_000166,166,True,True,True,True,True,
-gdelt_000167,167,True,True,False,True,False,Invalid or invented GDELT columns used: ['action_location']
-gdelt_000168,168,True,True,True,True,True,
+gdelt_000167,167,True,True,True,True,True,
+gdelt_000168,168,True,True,True,False,False,"Ruff: C:\Users\Admin\AppData\Local\Temp\tmpfc2oyvu9\candidate.py:2:40: F401 [*] `pyspark.sql.functions.count` imported but unused
+Found 1 error.
+[*] 1 fixable with the `--fix` option."
 gdelt_000169,169,True,True,True,True,True,
 gdelt_000170,170,True,True,True,True,True,
 gdelt_000171,171,True,True,True,True,True,
@@ -175,13 +190,13 @@ gdelt_000173,173,True,True,True,True,True,
 gdelt_000174,174,True,True,True,True,True,
 gdelt_000175,175,True,True,True,True,True,
 gdelt_000176,176,True,True,True,True,True,
-gdelt_000177,177,True,True,False,True,False,Invalid or invented GDELT columns used: ['action_country']
+gdelt_000177,177,True,True,True,True,True,
 gdelt_000178,178,True,True,True,True,True,
 gdelt_000179,179,True,True,True,True,True,
 gdelt_000180,180,True,True,True,True,True,
 gdelt_000181,181,True,True,True,True,True,
 gdelt_000182,182,True,True,True,True,True,
-gdelt_000183,183,True,True,True,True,True,
+gdelt_000183,183,True,True,False,True,False,Invalid or invented GDELT columns used: ['count']
 gdelt_000184,184,True,True,True,True,True,
 gdelt_000185,185,True,True,True,True,True,
 gdelt_000186,186,True,True,True,True,True,
@@ -193,9 +208,223 @@ gdelt_000191,191,False,False,False,False,False,Duplicate user prompt
 gdelt_000192,192,True,True,True,True,True,
 gdelt_000193,193,True,True,True,True,True,
 gdelt_000194,194,True,True,True,True,True,
-gdelt_000195,195,True,True,False,True,False,Invalid or invented GDELT columns used: ['source_url']
-gdelt_000196,196,True,True,False,True,False,Invalid or invented GDELT columns used: ['action_country']
+gdelt_000195,195,True,True,True,True,True,
+gdelt_000196,196,True,True,True,True,True,
 gdelt_000197,197,True,True,True,True,True,
 gdelt_000198,198,True,True,True,True,True,
 gdelt_000199,199,False,False,False,False,False,Duplicate user prompt
-gdelt_000200,200,True,True,True,True,True,
+gdelt_000200,200,True,True,False,True,False,Invalid or invented GDELT columns used: ['count']
+gdelt_000201,201,True,True,True,True,True,
+gdelt_000202,202,True,True,True,True,True,
+gdelt_000203,203,True,True,True,True,True,
+gdelt_000204,204,False,False,False,False,False,Duplicate user prompt
+gdelt_000205,205,True,True,True,True,True,
+gdelt_000206,206,True,True,True,True,True,
+gdelt_000207,207,True,True,True,True,True,
+gdelt_000208,208,True,True,True,True,True,
+gdelt_000209,209,True,True,True,True,True,
+gdelt_000210,210,True,True,True,True,True,
+gdelt_000211,211,True,True,True,True,True,
+gdelt_000212,212,True,False,False,False,False,Python syntax error at line 8: unexpected indent
+gdelt_000213,213,True,True,True,True,True,
+gdelt_000214,214,True,True,True,True,True,
+gdelt_000215,215,True,True,True,False,False,"Ruff: C:\Users\Admin\AppData\Local\Temp\tmpg3w15933\candidate.py:2:35: F401 [*] `pyspark.sql.functions.year` imported but unused
+Found 1 error.
+[*] 1 fixable with the `--fix` option."
+gdelt_000216,216,True,True,True,True,True,
+gdelt_000217,217,True,True,True,False,False,"Ruff: C:\Users\Admin\AppData\Local\Temp\tmp8a3tskix\candidate.py:2:47: F401 [*] `pyspark.sql.functions.avg` imported but unused
+Found 1 error.
+[*] 1 fixable with the `--fix` option."
+gdelt_000218,218,True,True,True,True,True,
+gdelt_000219,219,True,True,True,True,True,
+gdelt_000220,220,True,True,True,True,True,
+gdelt_000221,221,False,False,False,False,False,Duplicate user prompt
+gdelt_000222,222,True,True,True,True,True,
+gdelt_000223,223,True,True,True,True,True,
+gdelt_000224,224,True,True,True,True,True,
+gdelt_000225,225,True,True,True,True,True,
+gdelt_000226,226,True,True,True,True,True,
+gdelt_000227,227,True,True,True,True,True,
+gdelt_000228,228,True,True,True,True,True,
+gdelt_000229,229,True,True,True,True,True,
+gdelt_000230,230,True,True,True,True,True,
+gdelt_000231,231,False,False,False,False,False,Duplicate user prompt
+gdelt_000232,232,True,True,True,True,True,
+gdelt_000233,233,True,True,True,True,True,
+gdelt_000234,234,True,True,True,True,True,
+gdelt_000235,235,True,True,True,True,True,
+gdelt_000236,236,True,True,True,True,True,
+gdelt_000237,237,True,True,True,True,True,
+gdelt_000238,238,True,True,True,True,True,
+gdelt_000239,239,True,True,True,True,True,
+gdelt_000240,240,True,True,True,True,True,
+gdelt_000241,241,False,False,False,False,False,Duplicate user prompt
+gdelt_000242,242,True,True,True,True,True,
+gdelt_000243,243,True,True,True,True,True,
+gdelt_000244,244,True,True,True,True,True,
+gdelt_000245,245,True,True,True,True,True,
+gdelt_000246,246,True,True,True,True,True,
+gdelt_000247,247,False,False,False,False,False,Duplicate user prompt
+gdelt_000248,248,True,True,True,True,True,
+gdelt_000249,249,True,True,True,True,True,
+gdelt_000250,250,True,True,True,True,True,
+gdelt_000251,251,False,False,False,False,False,Duplicate user prompt
+gdelt_000252,252,True,True,True,True,True,
+gdelt_000253,253,False,False,False,False,False,Duplicate user prompt
+gdelt_000254,254,True,True,True,True,True,
+gdelt_000255,255,True,True,False,True,False,Invalid or invented GDELT columns used: ['count']
+gdelt_000256,256,True,True,False,True,False,Invalid or invented GDELT columns used: ['count']
+gdelt_000257,257,True,True,True,True,True,
+gdelt_000258,258,True,True,True,True,True,
+gdelt_000259,259,True,True,True,True,True,
+gdelt_000260,260,True,True,True,True,True,
+gdelt_000261,261,False,False,False,False,False,Duplicate user prompt
+gdelt_000262,262,True,True,True,True,True,
+gdelt_000263,263,True,True,True,True,True,
+gdelt_000264,264,True,True,True,True,True,
+gdelt_000265,265,True,True,True,True,True,
+gdelt_000266,266,True,True,True,True,True,
+gdelt_000267,267,True,True,True,True,True,
+gdelt_000268,268,True,True,True,True,True,
+gdelt_000269,269,True,True,True,True,True,
+gdelt_000270,270,True,True,True,True,True,
+gdelt_000271,271,True,True,True,True,True,
+gdelt_000272,272,True,True,True,True,True,
+gdelt_000273,273,True,True,True,True,True,
+gdelt_000274,274,True,True,True,True,True,
+gdelt_000275,275,True,True,True,False,False,"Ruff: C:\Users\Admin\AppData\Local\Temp\tmpwfh_1s8e\candidate.py:2:47: F401 [*] `pyspark.sql.functions.sum` imported but unused
+Found 1 error.
+[*] 1 fixable with the `--fix` option."
+gdelt_000276,276,True,True,True,True,True,
+gdelt_000277,277,True,True,True,True,True,
+gdelt_000278,278,True,True,True,True,True,
+gdelt_000279,279,True,True,True,True,True,
+gdelt_000280,280,True,True,True,True,True,
+gdelt_000281,281,True,True,True,True,True,
+gdelt_000282,282,False,False,False,False,False,Duplicate user prompt
+gdelt_000283,283,True,True,True,True,True,
+gdelt_000284,284,True,True,True,True,True,
+gdelt_000285,285,True,True,True,True,True,
+gdelt_000286,286,True,True,True,True,True,
+gdelt_000287,287,False,False,False,False,False,Duplicate user prompt
+gdelt_000288,288,True,True,True,True,True,
+gdelt_000289,289,True,True,False,True,False,Invalid or invented GDELT columns used: ['count']
+gdelt_000290,290,True,True,True,True,True,
+gdelt_000291,291,True,True,True,True,True,
+gdelt_000292,292,True,True,False,True,False,Invalid or invented GDELT columns used: ['count']
+gdelt_000293,293,True,True,True,True,True,
+gdelt_000294,294,True,True,True,True,True,
+gdelt_000295,295,True,True,True,False,False,"Ruff: C:\Users\Admin\AppData\Local\Temp\tmpagpa0j5z\candidate.py:9:1: E402 Module level import not at top of file
+Found 1 error."
+gdelt_000296,296,True,True,False,True,False,Invalid or invented GDELT columns used: ['count']
+gdelt_000297,297,True,True,False,True,False,Invalid or invented GDELT columns used: ['count']
+gdelt_000298,298,True,True,True,True,True,
+gdelt_000299,299,True,True,True,True,True,
+gdelt_000300,300,True,True,True,True,True,
+gdelt_000301,301,True,True,True,False,False,"Ruff: C:\Users\Admin\AppData\Local\Temp\tmpz5sgf86s\candidate.py:8:162: F821 Undefined name `lit`
+C:\Users\Admin\AppData\Local\Temp\tmpz5sgf86s\candidate.py:10:129: F821 Undefined name `lit`
+C:\Users\Admin\AppData\Local\Temp\tmpz5sgf86s\candidate.py:12:128: F821 Undefined name `lit`
+Found 3 errors."
+gdelt_000302,302,True,True,True,True,True,
+gdelt_000303,303,False,False,False,False,False,Duplicate user prompt
+gdelt_000304,304,True,True,False,True,False,Invalid or invented GDELT columns used: ['count']
+gdelt_000305,305,True,True,True,True,True,
+gdelt_000306,306,True,True,True,True,True,
+gdelt_000307,307,True,True,True,True,True,
+gdelt_000308,308,True,True,True,True,True,
+gdelt_000309,309,True,True,True,True,True,
+gdelt_000310,310,True,True,True,True,True,
+gdelt_000311,311,True,True,True,True,True,
+gdelt_000312,312,True,True,True,True,True,
+gdelt_000313,313,True,True,True,True,True,
+gdelt_000314,314,True,True,True,True,True,
+gdelt_000315,315,True,True,True,True,True,
+gdelt_000316,316,True,True,True,True,True,
+gdelt_000317,317,True,True,True,True,True,
+gdelt_000318,318,True,True,True,True,True,
+gdelt_000319,319,True,True,True,True,True,
+gdelt_000320,320,True,True,True,True,True,
+gdelt_000321,321,True,True,True,True,True,
+gdelt_000322,322,True,True,True,True,True,
+gdelt_000323,323,True,True,True,True,True,
+gdelt_000324,324,True,True,True,True,True,
+gdelt_000325,325,True,True,True,True,True,
+gdelt_000326,326,True,True,True,True,True,
+gdelt_000327,327,True,True,True,True,True,
+gdelt_000328,328,True,True,True,True,True,
+gdelt_000329,329,True,True,True,True,True,
+gdelt_000330,330,False,False,False,False,False,Duplicate user prompt
+gdelt_000331,331,True,True,True,True,True,
+gdelt_000332,332,True,True,True,True,True,
+gdelt_000333,333,True,True,True,True,True,
+gdelt_000334,334,True,True,True,False,False,"Ruff: C:\Users\Admin\AppData\Local\Temp\tmpsm_p23w2\candidate.py:2:40: F401 [*] `pyspark.sql.functions.when` imported but unused
+Found 1 error.
+[*] 1 fixable with the `--fix` option."
+gdelt_000335,335,True,True,True,True,True,
+gdelt_000336,336,True,True,True,True,True,
+gdelt_000337,337,True,True,True,True,True,
+gdelt_000338,338,True,True,True,True,True,
+gdelt_000339,339,True,True,True,True,True,
+gdelt_000340,340,True,True,True,True,True,
+gdelt_000341,341,True,True,True,True,True,
+gdelt_000342,342,True,True,True,True,True,
+gdelt_000343,343,True,True,True,True,True,
+gdelt_000344,344,True,True,True,True,True,
+gdelt_000345,345,True,True,True,True,True,
+gdelt_000346,346,False,False,False,False,False,Duplicate user prompt
+gdelt_000347,347,True,True,True,True,True,
+gdelt_000348,348,True,True,True,True,True,
+gdelt_000349,349,False,False,False,False,False,Duplicate user prompt
+gdelt_000350,350,True,True,True,True,True,
+gdelt_000351,351,True,True,True,True,True,
+gdelt_000352,352,True,True,True,True,True,
+gdelt_000353,353,True,True,True,True,True,
+gdelt_000354,354,True,True,True,True,True,
+gdelt_000355,355,True,True,True,False,False,"Ruff: C:\Users\Admin\AppData\Local\Temp\tmp1t1vkx7u\candidate.py:2:40: F401 [*] `pyspark.sql.functions.when` imported but unused
+Found 1 error.
+[*] 1 fixable with the `--fix` option."
+gdelt_000356,356,True,True,True,True,True,
+gdelt_000357,357,True,True,True,True,True,
+gdelt_000358,358,True,True,True,True,True,
+gdelt_000359,359,True,True,True,True,True,
+gdelt_000360,360,True,True,True,True,True,
+gdelt_000361,361,True,True,True,True,True,
+gdelt_000362,362,True,True,True,True,True,
+gdelt_000363,363,True,True,True,True,True,
+gdelt_000364,364,True,True,True,True,True,
+gdelt_000365,365,False,False,False,False,False,Duplicate user prompt
+gdelt_000366,366,True,True,True,True,True,
+gdelt_000367,367,True,True,True,True,True,
+gdelt_000368,368,True,True,True,True,True,
+gdelt_000369,369,True,True,True,True,True,
+gdelt_000370,370,True,True,True,True,True,
+gdelt_000371,371,True,True,True,True,True,
+gdelt_000372,372,True,True,True,True,True,
+gdelt_000373,373,False,False,False,False,False,Duplicate user prompt
+gdelt_000374,374,True,True,True,True,True,
+gdelt_000375,375,True,True,True,True,True,
+gdelt_000376,376,True,True,True,True,True,
+gdelt_000377,377,True,True,True,True,True,
+gdelt_000378,378,True,True,True,True,True,
+gdelt_000379,379,True,True,True,True,True,
+gdelt_000380,380,True,True,True,True,True,
+gdelt_000381,381,True,True,True,True,True,
+gdelt_000382,382,True,True,True,True,True,
+gdelt_000383,383,True,True,True,True,True,
+gdelt_000384,384,True,True,True,True,True,
+gdelt_000385,385,True,True,False,True,False,Invalid or invented GDELT columns used: ['count']
+gdelt_000386,386,True,True,True,True,True,
+gdelt_000387,387,True,True,True,True,True,
+gdelt_000388,388,True,True,True,True,True,
+gdelt_000389,389,True,True,True,True,True,
+gdelt_000390,390,True,True,True,True,True,
+gdelt_000391,391,True,True,True,True,True,
+gdelt_000392,392,True,True,True,True,True,
+gdelt_000393,393,True,True,True,True,True,
+gdelt_000394,394,True,True,True,True,True,
+gdelt_000395,395,False,False,False,False,False,Duplicate user prompt
+gdelt_000396,396,True,True,True,True,True,
+gdelt_000397,397,True,True,True,True,True,
+gdelt_000398,398,True,True,True,True,True,
+gdelt_000399,399,True,True,True,True,True,
+gdelt_000400,400,True,True,True,True,True,
