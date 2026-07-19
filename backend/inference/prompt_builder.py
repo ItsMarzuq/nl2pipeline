@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 SYSTEM_PROMPT = '''\
 You are an expert PySpark developer for the NL2Pipeline project. Given a Big \
@@ -189,33 +189,19 @@ def load_env_yaml(path: str | Path) -> str:
     return yaml.dump(data, sort_keys=False)
 
 
-def build_messages(
-    env_yaml_text: str,
-    user_request: str,
-    correction_history: list[dict] | None = None,
-) -> list[dict]:
+def get_prompt_template() -> ChatPromptTemplate:
     """
-    Build the messages list, OpenAI/Ollama chat format ({"role", "content"}).
+    Return the ChatPromptTemplate used by the LCEL chain.
 
-    First call:  [system, user]
-    Retries:     [system, user, assistant(attempt-N), user(error+retry), ...]
+    Slot layout (in order):
+      system            — expert PySpark rules + worked examples (always present)
+      session_history   — previous (prompt, code) pairs from this session (optional)
+      human             — env YAML + current user request
+      correction_history — failed-attempt / error pairs within this request (optional)
     """
-    messages: list[dict] = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": f"{env_yaml_text}\n\n{user_request}"},
-    ]
-    if correction_history:
-        messages.extend(correction_history)
-    return messages
-
-
-_ROLE_MAP: dict[str, type[BaseMessage]] = {
-    "system": SystemMessage,
-    "user": HumanMessage,
-    "assistant": AIMessage,
-}
-
-
-def to_langchain_messages(messages: list[dict]) -> list[BaseMessage]:
-    """Convert {"role", "content"} dicts into LangChain message objects for ChatOllama."""
-    return [_ROLE_MAP[m["role"]](content=m["content"]) for m in messages]
+    return ChatPromptTemplate.from_messages([
+        ("system", SYSTEM_PROMPT),
+        MessagesPlaceholder(variable_name="session_history", optional=True),
+        ("human", "{env_yaml}\n\n{user_request}"),
+        MessagesPlaceholder(variable_name="correction_history", optional=True),
+    ])

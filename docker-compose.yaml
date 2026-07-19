@@ -184,13 +184,6 @@ services:
     networks:
       - nl2pipeline-net
     restart: unless-stopped
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [ gpu ]
 
   ollama-pull:
     image: ollama/ollama:latest

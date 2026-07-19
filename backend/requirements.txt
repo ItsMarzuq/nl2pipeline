@@ -24,6 +24,5 @@ tiktoken
 
 # --- LangChain ---
 langchain-community>=0.2
-# --- LLM inference (served by Ollama, see docker-compose.yaml) ---
 langchain-core>=0.2
 langchain-ollama>=0.1
