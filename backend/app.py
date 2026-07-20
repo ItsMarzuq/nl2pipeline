@@ -12,6 +12,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from langchain_core.messages import BaseMessage
+
 from .cassandra_client import connect as connect_cassandra
 from .config import Settings
 from .inference.model_loader import load_llm
@@ -61,10 +63,13 @@ async def lifespan(app: FastAPI):
         settings.CASSANDRA_KEYSPACE,
     )
 
+    session_store: dict[str, list[BaseMessage]] = {}
+
     app.state.engine = GenerationEngine(
         llm=llm,
         env_yaml=env_yaml,
         max_attempts=settings.MAX_ATTEMPTS,
+        session_store=session_store,
         mock=settings.MOCK_LLM,
         cassandra_session=cassandra_session,
     )
@@ -97,6 +102,7 @@ app.add_middleware(
 class GenerateRequest(BaseModel):
     prompt: str
     environment_override: str | None = None
+    session_id: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -113,7 +119,7 @@ async def generate(req: GenerateRequest, request: Request):
     engine: GenerationEngine = request.app.state.engine
 
     async def stream():
-        async for item in engine.run(req.prompt, req.environment_override):
+        async for item in engine.run(req.prompt, req.environment_override, req.session_id):
             yield _sse(item["event"], item["data"])
 
     return StreamingResponse(
